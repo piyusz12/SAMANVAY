@@ -11,6 +11,7 @@ import TransfersView from './components/TransfersView';
 import LodgeComplaintView from './components/LodgeComplaintView';
 import AuditTrailView from './components/AuditTrailView';
 import ComplaintDetailModal from './components/ComplaintDetailModal';
+import HealthStatusModal from './components/HealthStatusModal';
 
 const DEMO_PERSONAS = [
   {
@@ -77,6 +78,7 @@ export default function App() {
   const [loadingConflicts, setLoadingConflicts] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotificationDrawer, setShowNotificationDrawer] = useState(false);
+  const [showHealthModal, setShowHealthModal] = useState(false);
 
   // Complaints Table State
   const [complaints, setComplaints] = useState([]);
@@ -259,6 +261,16 @@ export default function App() {
             {unreadNotificationsCount > 0 && (
               <span className="badge-counter">{unreadNotificationsCount}</span>
             )}
+          </button>
+
+          {/* Health Check Diagnostics Button */}
+          <button
+            id="health-status-btn"
+            className="btn-icon"
+            onClick={() => setShowHealthModal(true)}
+            title="System Health & Database Diagnostics"
+          >
+            🩺
           </button>
 
           {/* Theme Toggle */}
@@ -554,6 +566,11 @@ export default function App() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* 7. System Health Status Modal */}
+      {showHealthModal && (
+        <HealthStatusModal onClose={() => setShowHealthModal(false)} />
       )}
     </div>
   );
