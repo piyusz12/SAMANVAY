@@ -54,11 +54,41 @@ export const api = {
 
   // Institutions
   getInstitutions: (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
+    const cleanParams = {};
+    Object.keys(params).forEach((k) => {
+      if (params[k] !== undefined && params[k] !== null && params[k] !== '' && params[k] !== 'ALL') {
+        cleanParams[k] = params[k];
+      }
+    });
+    const qs = new URLSearchParams(cleanParams).toString();
     return request(`/institutions${qs ? `?${qs}` : ''}`);
   },
   getInstitution: (id) => request(`/institutions/${id}`),
   getInstitutionDossier: (id) => request(`/institutions/${id}/dossier`),
+  getInstitutionAuditHistory: (id) => request(`/institutions/${id}/audit-history`),
+  checkInstitutionDuplicate: (data) =>
+    request('/institutions/match', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  createInstitution: (data) =>
+    request('/institutions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateInstitution: (id, data) =>
+    request(`/institutions/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  importInstitutionsCSV: (file, dryRun = true) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request(`/institutions/import-csv?dry_run=${dryRun}`, {
+      method: 'POST',
+      body: formData,
+    });
+  },
 
   // Complaints
   getComplaints: (params = {}) => {

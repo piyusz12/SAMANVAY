@@ -42,20 +42,42 @@ class InstitutionOut(InstitutionBase):
     created_at: datetime
     updated_at: datetime
 
+class InstitutionListResponse(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    items: List[InstitutionOut]
+
 class ConflictAlert(BaseModel):
     has_conflict: bool
     bureaus_involved: List[str]
     active_cases_count: int
     message: str
 
+class InstitutionAuditEntry(BaseModel):
+    id: int
+    action_type: str
+    description: str
+    actor_name: str
+    actor_role: str
+    actor_bureau: str
+    previous_state: Optional[str] = None
+    new_state: Optional[str] = None
+    timestamp: datetime
+
 class InstitutionDossierOut(BaseModel):
     institution: InstitutionOut
     total_complaints: int
     active_complaints: int
+    open_complaints: int
+    pending_complaints: int
     disposed_complaints: int
+    overdue_complaints: int
+    overlapping_complaints: int
     bureaus_involved: List[str]
     conflict_alert: ConflictAlert
     recent_complaints: List[dict]
+    audit_history: Optional[List[dict]] = []
 
 class InstitutionMatchRequest(BaseModel):
     aicte_id: Optional[str] = None
@@ -70,3 +92,21 @@ class InstitutionMatchResponse(BaseModel):
     match_strategy: Optional[str] = None  # AICTE_ID_EXACT, AISHE_CODE_EXACT, NORMALIZED_NAME_CITY_STATE
     confidence_score: float
     message: str
+
+class CSVImportItemResult(BaseModel):
+    row_number: int
+    aicte_id: str
+    name: str
+    status: str  # "IMPORTED", "DUPLICATE_SKIPPED", "VALIDATION_ERROR"
+    reason: Optional[str] = None
+    matched_institution_id: Optional[int] = None
+
+class CSVImportResponse(BaseModel):
+    dry_run: bool
+    total_rows: int
+    imported_count: int
+    skipped_duplicates_count: int
+    error_count: int
+    results: List[CSVImportItemResult]
+    message: str
+

@@ -462,6 +462,7 @@ export default function App() {
           <InstitutionDossierView
             selectedInstitutionId={selectedInstitutionId}
             onSelectComplaint={setSelectedComplaintId}
+            currentUser={currentUser}
           />
         )}
 

@@ -1,51 +1,74 @@
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from typing import List, Optional, Union
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Request, status
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 from backend.app.api.deps import get_db, get_current_user, require_roles
 from backend.app.models.institution import Institution
-from backend.app.models.complaint import Complaint
 from backend.app.models.user import User
+from backend.app.models.audit_log import AuditLog
 from backend.app.schemas.institution import (
     InstitutionOut,
     InstitutionCreate,
+    InstitutionUpdate,
+    InstitutionListResponse,
     InstitutionDossierOut,
     ConflictAlert,
     InstitutionMatchRequest,
-    InstitutionMatchResponse
+    InstitutionMatchResponse,
+    InstitutionAuditEntry,
+    CSVImportResponse
 )
 from backend.app.repositories.institution_repository import InstitutionRepository
-from backend.app.services.overlap_service import check_institution_conflict, ACTIVE_STATUSES
-from backend.app.services.complaint_service import calculate_sla_details
+from backend.app.services.institution_service import (
+    create_institution,
+    update_institution,
+    get_institution_dossier,
+    import_institutions_csv
+)
+from backend.app.services.audit_service import log_audit_event
+from backend.app.core.datetime_util import utc_now
 
 router = APIRouter(prefix="/institutions", tags=["Institutions"])
 
-@router.get("", response_model=List[InstitutionOut])
+@router.get("", response_model=Union[InstitutionListResponse, List[InstitutionOut]])
 def list_institutions(
-    search: Optional[str] = Query(None, description="Search by name, AICTE ID, or city"),
-    region: Optional[str] = Query(None, description="Filter by AICTE region"),
+    search: Optional[str] = Query(None, description="Search by name, normalized name, AICTE ID, AISHE, city, state, or PIN"),
+    region: Optional[str] = Query(None, description="Filter by AICTE region (e.g. Western, Northern)"),
     state: Optional[str] = Query(None, description="Filter by state"),
+    institution_type: Optional[str] = Query(None, description="Filter by institution type"),
+    approval_status: Optional[str] = Query(None, description="Filter by approval status"),
+    sort_by: str = Query("name", description="Field to sort by: name, aicte_id, state, created_at"),
+    sort_order: str = Query("asc", description="Sort order: asc, desc"),
+    page: Optional[int] = Query(None, ge=1, description="Page number for pagination"),
+    page_size: Optional[int] = Query(None, ge=1, le=100, description="Items per page"),
     db: Session = Depends(get_db)
 ):
-    """Retrieve list of registered institutions with optional multi-facet filtering."""
-    query = db.query(Institution).filter(Institution.is_deleted == False)
-    
-    if search:
-        search_fmt = f"%{search}%"
-        query = query.filter(
-            or_(
-                Institution.name.ilike(search_fmt),
-                Institution.aicte_id.ilike(search_fmt),
-                Institution.city.ilike(search_fmt),
-                Institution.state.ilike(search_fmt)
-            )
-        )
-    if region:
-        query = query.filter(Institution.region == region)
-    if state:
-        query = query.filter(Institution.state == state)
+    """
+    Retrieve registered institutions with multi-facet filtering, full-text search, and sorting.
+    Returns paginated InstitutionListResponse when page parameter is provided; otherwise returns List[InstitutionOut].
+    """
+    repo = InstitutionRepository(db)
+    items, total = repo.search_and_filter(
+        search=search,
+        region=region,
+        state=state,
+        institution_type=institution_type,
+        approval_status=approval_status,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        page=page,
+        page_size=page_size
+    )
 
-    return query.order_by(Institution.name.asc()).all()
+    if page is not None:
+        p_size = page_size or 20
+        return InstitutionListResponse(
+            total=total,
+            page=page,
+            page_size=p_size,
+            items=[InstitutionOut.model_validate(i) for i in items]
+        )
+
+    return [InstitutionOut.model_validate(i) for i in items]
 
 @router.post("/match", response_model=InstitutionMatchResponse)
 def check_institution_duplicate(
@@ -54,7 +77,7 @@ def check_institution_duplicate(
 ):
     """
     Normalized Institution Anti-Duplicate Check:
-    Validates identifiers (AICTE ID, AISHE Code) and normalized name + location to prevent duplicates.
+    Evaluates exact AICTE ID, exact AISHE Code, and normalized name + location to flag duplicate entries.
     """
     repo = InstitutionRepository(db)
     is_dup, matched, strategy, confidence, msg = repo.check_duplicate_or_match(
@@ -76,46 +99,46 @@ def check_institution_duplicate(
     )
 
 @router.post("", response_model=InstitutionOut, status_code=status.HTTP_201_CREATED)
-def create_institution(
+def register_institution(
     payload: InstitutionCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(["SUPER_ADMIN", "BUREAU_ADMIN", "BUREAU_HEAD"]))
+    current_user: User = Depends(require_roles(["SUPER_ADMIN", "BUREAU_ADMIN"]))
 ):
-    """Registers a new institution following normalized anti-duplicate matching rules."""
-    repo = InstitutionRepository(db)
-    is_dup, matched, _, _, msg = repo.check_duplicate_or_match(
-        aicte_id=payload.aicte_id,
-        aishe_code=payload.aishe_code,
-        name=payload.name,
-        city=payload.city,
-        state=payload.state
-    )
-
-    if is_dup:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Registration rejected: {msg}"
-        )
-
-    inst_obj = Institution(**payload.model_dump())
-    repo.create(inst_obj)
-    db.commit()
-    db.refresh(inst_obj)
-    return inst_obj
+    """
+    Registers a new institution following normalized anti-duplicate matching rules.
+    Restricted to Super Administrators and Bureau Administrators.
+    """
+    return create_institution(db=db, data=payload, current_user=current_user)
 
 @router.get("/{institution_id}", response_model=InstitutionOut)
 def get_institution(institution_id: int, db: Session = Depends(get_db)):
-    """Retrieve institution details by primary key."""
-    institution = db.query(Institution).filter(
-        Institution.id == institution_id,
-        Institution.is_deleted == False
-    ).first()
-    if not institution:
+    """Retrieve institution details by primary key ID."""
+    repo = InstitutionRepository(db)
+    institution = repo.get_by_id(institution_id)
+    if not institution or institution.is_deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Institution ID {institution_id} not found."
         )
-    return institution
+    return InstitutionOut.model_validate(institution)
+
+@router.patch("/{institution_id}", response_model=InstitutionOut)
+def update_institution_details(
+    institution_id: int,
+    payload: InstitutionUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(["SUPER_ADMIN", "BUREAU_ADMIN"]))
+):
+    """
+    Update institution profile with duplicate validation and audit trail.
+    Restricted to Super Administrators and Bureau Administrators.
+    """
+    return update_institution(
+        db=db,
+        institution_id=institution_id,
+        data=payload,
+        current_user=current_user
+    )
 
 @router.delete("/{institution_id}", status_code=status.HTTP_200_OK)
 def delete_institution(
@@ -123,7 +146,7 @@ def delete_institution(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(["SUPER_ADMIN"]))
 ):
-    """Soft-deletes an institution according to statutory retention policies."""
+    """Soft-deletes an institution according to statutory retention policies. Restricted to Super Admin."""
     repo = InstitutionRepository(db)
     institution = repo.get_by_id(institution_id)
     if not institution or institution.is_deleted:
@@ -131,69 +154,95 @@ def delete_institution(
     
     repo.soft_delete(institution)
     db.commit()
+
+    log_audit_event(
+        db=db,
+        action_type="INSTITUTION_ARCHIVED",
+        description=f"Institution {institution.name} ({institution.aicte_id}) soft-deleted.",
+        actor_id=current_user.id,
+        actor_name=current_user.full_name,
+        actor_role=current_user.role,
+        actor_bureau=current_user.bureau,
+        institution_id=institution.id,
+        commit=True
+    )
+
     return {"message": f"Institution {institution.aicte_id} successfully archived."}
 
 @router.get("/{institution_id}/dossier", response_model=InstitutionDossierOut)
-def get_institution_dossier(
+def get_institution_360_dossier(
     institution_id: int,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """
     Unified Institution 360-degree Dossier:
     Returns full institutional history, all past/active complaints across all AICTE bureaus,
-    and live cross-bureau conflict radar alert.
+    exact breakdown counts (total, open, pending, disposed, overdue, overlapping),
+    live cross-bureau conflict radar alert, and chronological audit trail.
     """
-    institution = db.query(Institution).filter(
-        Institution.id == institution_id,
-        Institution.is_deleted == False
-    ).first()
-    if not institution:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Institution ID {institution_id} not found."
+    current_user: Optional[User] = None
+    auth_header = request.headers.get("Authorization")
+    auth_cookie = request.cookies.get("access_token")
+    if auth_header or auth_cookie:
+        try:
+            current_user = get_current_user(request=request, db=db)
+        except HTTPException:
+            current_user = None
+
+    return get_institution_dossier(db=db, institution_id=institution_id, current_user=current_user)
+
+@router.get("/{institution_id}/audit-history", response_model=List[InstitutionAuditEntry])
+def get_institution_audit_history(
+    institution_id: int,
+    db: Session = Depends(get_db)
+):
+    """Retrieve chronological audit trail of changes to this institution."""
+    repo = InstitutionRepository(db)
+    inst = repo.get_by_id(institution_id)
+    if not inst or inst.is_deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Institution not found.")
+
+    logs = db.query(AuditLog).filter(
+        AuditLog.institution_id == institution_id
+    ).order_by(AuditLog.timestamp.desc()).all()
+
+    return [
+        InstitutionAuditEntry(
+            id=log.id,
+            action_type=log.action_type,
+            description=log.description,
+            actor_name=log.actor_name,
+            actor_role=log.actor_role,
+            actor_bureau=log.actor_bureau,
+            previous_state=log.previous_state,
+            new_state=log.new_state,
+            timestamp=log.timestamp
         )
+        for log in logs
+    ]
 
-    complaints = db.query(Complaint).filter(
-        Complaint.institution_id == institution_id,
-        Complaint.is_deleted == False
-    ).order_by(Complaint.created_at.desc()).all()
-    
-    active_count = sum(1 for c in complaints if c.status in ACTIVE_STATUSES)
-    disposed_count = sum(1 for c in complaints if c.status in ["DISPOSED", "RESOLVED"])
-    bureaus_involved = list(set(c.bureau for c in complaints))
+@router.post("/import-csv", response_model=CSVImportResponse)
+async def import_institutions_csv_dataset(
+    file: UploadFile = File(...),
+    dry_run: bool = Query(True, description="When true, only validates and reports duplicates without persisting"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(["SUPER_ADMIN", "BUREAU_ADMIN"]))
+):
+    """
+    Batch import synthetic institution datasets from CSV file.
+    Validates mandatory schema columns and executes anti-duplicate matching per record.
+    Set dry_run=false to persist valid non-duplicate records.
+    """
+    content = await file.read()
+    try:
+        csv_text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        csv_text = content.decode("latin-1")
 
-    conflict_data = check_institution_conflict(db, institution_id)
-    conflict_alert = ConflictAlert(
-        has_conflict=conflict_data["has_conflict"],
-        bureaus_involved=conflict_data["bureaus_involved"],
-        active_cases_count=conflict_data["active_cases_count"],
-        message=conflict_data["message"]
-    )
-
-    recent_complaints_data = []
-    for c in complaints:
-        days_open, is_overdue, sla_status = calculate_sla_details(c)
-        recent_complaints_data.append({
-            "id": c.id,
-            "complaint_no": c.complaint_no,
-            "bureau": c.bureau,
-            "subject": c.subject,
-            "category": c.category,
-            "status": c.status,
-            "priority": c.priority,
-            "days_open": days_open,
-            "is_overdue": is_overdue,
-            "sla_status": sla_status,
-            "created_at": c.created_at.isoformat(),
-            "assigned_officer_name": c.assigned_officer_name
-        })
-
-    return InstitutionDossierOut(
-        institution=InstitutionOut.model_validate(institution),
-        total_complaints=len(complaints),
-        active_complaints=active_count,
-        disposed_complaints=disposed_count,
-        bureaus_involved=bureaus_involved,
-        conflict_alert=conflict_alert,
-        recent_complaints=recent_complaints_data
+    return import_institutions_csv(
+        db=db,
+        csv_text=csv_text,
+        dry_run=dry_run,
+        current_user=current_user
     )
