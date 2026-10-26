@@ -1,5 +1,6 @@
 from typing import List, Optional
 from datetime import datetime
+from backend.app.core.datetime_util import utc_now
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -82,7 +83,7 @@ def request_bureau_transfer(
         reason=payload.reason,
         status="PENDING_APPROVAL",
         requested_by_id=current_user.id,
-        created_at=datetime.utcnow()
+        created_at=utc_now()
     )
     db.add(movement)
     db.commit()
@@ -136,7 +137,7 @@ def decide_transfer_request(
     movement.status = payload.decision
     movement.decided_by_id = current_user.id
     movement.decision_notes = payload.notes
-    movement.decided_at = datetime.utcnow()
+    movement.decided_at = utc_now()
 
     complaint = movement.complaint
     old_bureau = complaint.bureau
@@ -144,7 +145,7 @@ def decide_transfer_request(
     if payload.decision == "ACCEPTED":
         complaint.bureau = movement.to_bureau
         complaint.status = "TRANSFERRED"
-        complaint.updated_at = datetime.utcnow()
+        complaint.updated_at = utc_now()
 
     db.commit()
     db.refresh(movement)

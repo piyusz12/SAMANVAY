@@ -1,8 +1,9 @@
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class AuditLogOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     complaint_id: Optional[int] = None
     institution_id: Optional[int] = None
@@ -14,12 +15,22 @@ class AuditLogOut(BaseModel):
     description: str
     previous_state: Optional[str] = None
     new_state: Optional[str] = None
+    ip_address: Optional[str] = None
+    request_id: Optional[str] = None
     timestamp: datetime
 
-    class Config:
-        from_attributes = True
+class NotificationDeliveryAttemptOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    notification_id: int
+    channel: str
+    attempt_number: int
+    status: str
+    error_message: Optional[str] = None
+    attempted_at: datetime
 
 class NotificationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: Optional[int] = None
     target_bureau: Optional[str] = None
@@ -28,8 +39,7 @@ class NotificationOut(BaseModel):
     alert_type: str
     title: str
     message: str
+    delivery_channel: str
+    delivery_status: str
     is_read: bool
     created_at: datetime
-
-    class Config:
-        from_attributes = True

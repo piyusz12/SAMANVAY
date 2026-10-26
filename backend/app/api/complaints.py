@@ -1,4 +1,5 @@
 import os
+import hashlib
 from typing import Optional, List
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
@@ -8,12 +9,16 @@ from backend.app.api.deps import get_db, get_current_user, require_roles
 from backend.app.models.complaint import Complaint
 from backend.app.models.institution import Institution
 from backend.app.models.user import User
+from backend.app.models.evidence_attachment import EvidenceAttachment
 from backend.app.schemas.complaint import (
     ComplaintCreate,
     ComplaintOut,
+    ComplaintDetailOut,
     ComplaintListResponse,
     StatusUpdateSchema,
-    OfficerAssignSchema
+    OfficerAssignSchema,
+    CaseStatusHistoryOut,
+    CaseAssignmentHistoryOut
 )
 from backend.app.services.complaint_service import (
     create_complaint,
@@ -23,6 +28,7 @@ from backend.app.services.complaint_service import (
     calculate_sla_details
 )
 from backend.app.services.audit_service import log_audit_event
+from backend.app.core.datetime_util import utc_now
 from backend.app.config import settings
 
 router = APIRouter(prefix="/complaints", tags=["Complaints"])
@@ -41,7 +47,7 @@ def list_complaints(
     db: Session = Depends(get_db)
 ):
     """Retrieve list of complaints with comprehensive filtering, search and pagination."""
-    query = db.query(Complaint)
+    query = db.query(Complaint).filter(Complaint.is_deleted == False)
 
     if bureau and bureau != "ALL":
         query = query.filter(Complaint.bureau == bureau)
@@ -102,13 +108,38 @@ def lodge_complaint(
 @router.get("/{complaint_id}", response_model=ComplaintOut)
 def get_complaint(complaint_id: int, db: Session = Depends(get_db)):
     """Retrieve full record of a specific complaint case."""
-    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    complaint = db.query(Complaint).filter(
+        Complaint.id == complaint_id,
+        Complaint.is_deleted == False
+    ).first()
     if not complaint:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Complaint ID {complaint_id} not found."
         )
     return complaint_to_out(complaint)
+
+@router.get("/{complaint_id}/detail", response_model=ComplaintDetailOut)
+def get_complaint_detail_with_history(complaint_id: int, db: Session = Depends(get_db)):
+    """Retrieve complaint with complete immutable status and assignment histories."""
+    complaint = db.query(Complaint).filter(
+        Complaint.id == complaint_id,
+        Complaint.is_deleted == False
+    ).first()
+    if not complaint:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Complaint ID {complaint_id} not found."
+        )
+    base_out = complaint_to_out(complaint)
+    status_history_out = [CaseStatusHistoryOut.model_validate(h) for h in complaint.status_history]
+    assignment_history_out = [CaseAssignmentHistoryOut.model_validate(h) for h in complaint.assignment_history]
+
+    return ComplaintDetailOut(
+        **base_out.model_dump(),
+        status_history=status_history_out,
+        assignment_history=assignment_history_out
+    )
 
 @router.patch("/{complaint_id}/status", response_model=ComplaintOut)
 def change_status(
@@ -125,7 +156,8 @@ def change_status(
             new_status=payload.status,
             notes=payload.notes,
             resolution_summary=payload.resolution_summary,
-            current_user=current_user
+            current_user=current_user,
+            action_taken=payload.action_taken or "STATUS_UPDATE"
         )
         return complaint_to_out(updated)
     except ValueError as e:
@@ -136,7 +168,7 @@ def assign_case_officer(
     complaint_id: int,
     payload: OfficerAssignSchema,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(["BUREAU_HEAD", "SUPER_ADMIN"]))
+    current_user: User = Depends(require_roles(["BUREAU_ADMIN", "BUREAU_HEAD", "SUPER_ADMIN"]))
 ):
     """Assign an officer to the complaint. Restricted to Bureau Heads and Admins."""
     try:
@@ -144,11 +176,41 @@ def assign_case_officer(
             db=db,
             complaint_id=complaint_id,
             officer_id=payload.officer_id,
-            current_user=current_user
+            current_user=current_user,
+            assignment_notes=payload.assignment_notes
         )
         return complaint_to_out(updated)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+@router.delete("/{complaint_id}", status_code=status.HTTP_200_OK)
+def soft_delete_complaint(
+    complaint_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(["SUPER_ADMIN"]))
+):
+    """Soft-deletes a complaint according to data retention policy."""
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    if not complaint or complaint.is_deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Complaint not found.")
+    
+    complaint.is_deleted = True
+    complaint.updated_at = utc_now()
+    db.commit()
+
+    log_audit_event(
+        db=db,
+        action_type="CASE_ARCHIVED",
+        description=f"Complaint {complaint.complaint_no} soft-deleted under data retention policy.",
+        actor_id=current_user.id,
+        actor_name=current_user.full_name,
+        actor_role=current_user.role,
+        actor_bureau=current_user.bureau,
+        complaint_id=complaint.id,
+        institution_id=complaint.institution_id,
+        commit=True
+    )
+    return {"message": f"Complaint {complaint.complaint_no} successfully archived."}
 
 @router.post("/{complaint_id}/upload")
 def upload_evidence_document(
@@ -157,7 +219,7 @@ def upload_evidence_document(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Upload supporting evidence documents (PDF, DOCX, PNG, JPG). Validates size and extension."""
+    """Upload supporting evidence documents (PDF, DOCX, PNG, JPG). Computes SHA-256 and records metadata."""
     complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
     if not complaint:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Complaint not found.")
@@ -170,20 +232,41 @@ def upload_evidence_document(
             detail=f"Unsupported file type. Allowed: {', '.join(allowed_exts)}"
         )
 
+    file_bytes = file.file.read()
+    file_size = len(file_bytes)
+    sha256 = hashlib.sha256(file_bytes).hexdigest()
+
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    safe_filename = f"complaint_{complaint_id}_{int(datetime.utcnow().timestamp())}_{file.filename}"
+    timestamp_tag = int(utc_now().timestamp())
+    safe_filename = f"complaint_{complaint_id}_{timestamp_tag}_{file.filename}"
     filepath = os.path.join(settings.UPLOAD_DIR, safe_filename)
 
     with open(filepath, "wb") as f:
-        f.write(file.file.read())
+        f.write(file_bytes)
 
     complaint.evidence_file_name = safe_filename
+    
+    # Create EvidenceAttachment record
+    attachment = EvidenceAttachment(
+        complaint_id=complaint.id,
+        file_name=safe_filename,
+        original_file_name=file.filename,
+        file_path=filepath,
+        file_size_bytes=file_size,
+        mime_type=file.content_type or "application/octet-stream",
+        sha256_checksum=sha256,
+        uploaded_by_id=current_user.id,
+        retention_status="ACTIVE",
+        is_confidential=False,
+        created_at=utc_now()
+    )
+    db.add(attachment)
     db.commit()
 
     log_audit_event(
         db=db,
         action_type="EVIDENCE_UPLOADED",
-        description=f"Evidence document uploaded: {file.filename}",
+        description=f"Evidence document uploaded: {file.filename} (SHA256: {sha256[:12]}...)",
         actor_id=current_user.id,
         actor_name=current_user.full_name,
         actor_role=current_user.role,
@@ -193,4 +276,9 @@ def upload_evidence_document(
         commit=True
     )
 
-    return {"filename": safe_filename, "status": "Uploaded successfully"}
+    return {
+        "filename": safe_filename,
+        "sha256": sha256,
+        "size_bytes": file_size,
+        "status": "Uploaded successfully"
+    }

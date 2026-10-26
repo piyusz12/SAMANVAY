@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Any, Dict
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
@@ -56,7 +56,7 @@ def create_rfc7807_error_response(
         "detail": detail,
         "error_code": error_code,
         "request_id": req_id,
-        "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     }
     if extra:
         content["extra"] = extra

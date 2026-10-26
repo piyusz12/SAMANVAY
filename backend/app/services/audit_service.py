@@ -1,7 +1,8 @@
-from datetime import datetime
 from typing import Optional
 from sqlalchemy.orm import Session
 from backend.app.models.audit_log import AuditLog
+from backend.app.core.datetime_util import utc_now
+from backend.app.core.logging import request_id_ctx_var
 
 def log_audit_event(
     db: Session,
@@ -15,6 +16,7 @@ def log_audit_event(
     institution_id: Optional[int] = None,
     previous_state: Optional[str] = None,
     new_state: Optional[str] = None,
+    ip_address: Optional[str] = None,
     commit: bool = False
 ) -> AuditLog:
     """Record an immutable regulatory audit event in the system."""
@@ -29,7 +31,9 @@ def log_audit_event(
         description=description,
         previous_state=previous_state,
         new_state=new_state,
-        timestamp=datetime.utcnow()
+        ip_address=ip_address,
+        request_id=request_id_ctx_var.get(),
+        timestamp=utc_now()
     )
     db.add(entry)
     if commit:

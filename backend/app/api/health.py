@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Response, status
 from backend.app.config import settings
 from backend.app.core.db_check import validate_database_connection
@@ -28,7 +28,7 @@ def health_check(response: Response):
             "dialect": db_diag["dialect"],
             "latency_ms": db_diag["latency_ms"]
         },
-        "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     }
 
 @router.get("/health/live")

@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     # Environment mode: development | test | production
     APP_ENV: str = os.getenv("APP_ENV", "development")
     DEBUG: bool = os.getenv("DEBUG", "True").lower() in ("true", "1")
+    SEED_SYNTHETIC_DATA: bool = os.getenv("SEED_SYNTHETIC_DATA", "True").lower() in ("true", "1")
     
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "samanvay-aicte-secure-token-key-26264-production-grade")

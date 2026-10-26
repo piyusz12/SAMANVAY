@@ -41,12 +41,13 @@ async def lifespan(app: FastAPI):
         # Ensure schema tables exist
         Base.metadata.create_all(bind=engine)
         
-        # Seed synthetic demonstration data
-        db = SessionLocal()
-        try:
-            seed_database(db)
-        finally:
-            db.close()
+        # Seed synthetic demonstration data (development only)
+        if settings.APP_ENV == "development" and settings.SEED_SYNTHETIC_DATA:
+            db = SessionLocal()
+            try:
+                seed_database(db)
+            finally:
+                db.close()
     else:
         logger.critical(
             f"Database connection FAILED: {diag['error']}\n"

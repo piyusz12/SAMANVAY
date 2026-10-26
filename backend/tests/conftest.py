@@ -1,8 +1,12 @@
+import os
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+from backend.app.config import settings
+settings.APP_ENV = "testing"
 
 from backend.app.database import Base, get_db
 from backend.app.main import app
@@ -20,24 +24,21 @@ engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(autouse=True)
 def setup_test_db():
+    """Provides a fresh, fully isolated database seeded with synthetic demo data for each test."""
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
-    seed_database(db)
+    seed_database(db, force=True)
     db.close()
     yield
     Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture
 def db_session():
-    connection = engine.connect()
-    transaction = connection.begin()
-    session = TestingSessionLocal(bind=connection)
+    session = TestingSessionLocal()
     yield session
     session.close()
-    transaction.rollback()
-    connection.close()
 
 @pytest.fixture
 def client(db_session):

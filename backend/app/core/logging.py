@@ -1,7 +1,7 @@
 import logging
 import sys
 import contextvars
-from datetime import datetime
+from datetime import datetime, timezone
 
 # ContextVar for async request-id correlation across logs
 request_id_ctx_var: contextvars.ContextVar[str] = contextvars.ContextVar("request_id", default="-")
@@ -11,7 +11,7 @@ class StructuredLogFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         record.request_id = request_id_ctx_var.get()
         if not hasattr(record, "iso_timestamp"):
-            record.iso_timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            record.iso_timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         return super().format(record)
 
 def setup_logging(debug: bool = False) -> logging.Logger:

@@ -19,7 +19,10 @@ def check_institution_conflict(db: Session, institution_id: int) -> Dict[str, An
     Checks if an institution has active cases across multiple AICTE bureaus/cells.
     Returns structured conflict metadata.
     """
-    institution = db.query(Institution).filter(Institution.id == institution_id).first()
+    institution = db.query(Institution).filter(
+        Institution.id == institution_id,
+        Institution.is_deleted == False
+    ).first()
     if not institution:
         return {
             "has_conflict": False,
@@ -30,6 +33,7 @@ def check_institution_conflict(db: Session, institution_id: int) -> Dict[str, An
 
     active_complaints = db.query(Complaint).filter(
         Complaint.institution_id == institution_id,
+        Complaint.is_deleted == False,
         Complaint.status.in_(ACTIVE_STATUSES)
     ).all()
 
@@ -60,6 +64,7 @@ def get_all_cross_bureau_conflicts(db: Session) -> List[Dict[str, Any]]:
     concurrent multi-bureau actions. This powers the AICTE Master Conflict Radar.
     """
     active_complaints = db.query(Complaint).filter(
+        Complaint.is_deleted == False,
         Complaint.status.in_(ACTIVE_STATUSES)
     ).all()
 
@@ -72,7 +77,10 @@ def get_all_cross_bureau_conflicts(db: Session) -> List[Dict[str, Any]]:
     for inst_id, complaints in inst_map.items():
         bureaus = list(set(c.bureau for c in complaints))
         if len(bureaus) > 1:
-            inst = db.query(Institution).filter(Institution.id == inst_id).first()
+            inst = db.query(Institution).filter(
+                Institution.id == inst_id,
+                Institution.is_deleted == False
+            ).first()
             if inst:
                 conflicts.append({
                     "institution_id": inst.id,
@@ -125,7 +133,9 @@ def trigger_conflict_notifications(db: Session, complaint: Complaint):
                         f"Alert: {len(conflict['bureaus_involved'])} AICTE bureaus "
                         f"({', '.join(conflict['bureaus_involved'])}) now have active cases for this institution. "
                         f"Review file before issuing unilateral regulatory orders."
-                    )
+                    ),
+                    delivery_channel="IN_APP",
+                    delivery_status="DELIVERED"
                 )
                 db.add(notif)
         db.commit()

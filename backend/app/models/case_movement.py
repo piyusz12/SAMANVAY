@@ -1,7 +1,7 @@
-from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from backend.app.database import Base
+from backend.app.core.datetime_util import utc_now
 
 class CaseMovement(Base):
     __tablename__ = "case_movements"
@@ -12,13 +12,13 @@ class CaseMovement(Base):
     to_bureau = Column(String(64), nullable=False)
     movement_type = Column(String(64), default="TRANSFER_REQUEST", nullable=False)  # TRANSFER_REQUEST, CO_HANDLING, ESCALATION
     reason = Column(Text, nullable=False)
-    status = Column(String(32), default="PENDING_APPROVAL", nullable=False)  # PENDING_APPROVAL, ACCEPTED, REJECTED, COMPLETED
+    status = Column(String(32), default="PENDING_APPROVAL", nullable=False, index=True)  # PENDING_APPROVAL, ACCEPTED, REJECTED, COMPLETED
     
     requested_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     decided_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     decision_notes = Column(Text, nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
     decided_at = Column(DateTime, nullable=True)
 
     complaint = relationship("Complaint", back_populates="movements")
