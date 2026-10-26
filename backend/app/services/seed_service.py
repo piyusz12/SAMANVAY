@@ -127,6 +127,15 @@ def seed_database(db: Session, force: bool = False):
             "phone": "+91 11 2958 1025"
         },
         {
+            "email": "bureau.officer.rb@samanvay.aicte.gov.in",
+            "hashed_password": DEMO_PASSWORD_HASH,
+            "full_name": "Meera Swaminathan [SYNTHETIC]",
+            "role": "BUREAU_OFFICER",
+            "bureau": "REGULATION_BUREAU",
+            "designation": "Section Officer / Reviewer",
+            "phone": "+91 11 2958 1026"
+        },
+        {
             "email": "officer.pgrc@samanvay.aicte.gov.in",
             "hashed_password": DEMO_PASSWORD_HASH,
             "full_name": "Pooja Hegde [SYNTHETIC]",
@@ -134,6 +143,15 @@ def seed_database(db: Session, force: bool = False):
             "bureau": "PGRC",
             "designation": "Grievance Redressal Officer",
             "phone": "+91 11 2958 1035"
+        },
+        {
+            "email": "auditor@samanvay.aicte.gov.in",
+            "hashed_password": DEMO_PASSWORD_HASH,
+            "full_name": "Sh. N. K. Sinha [SYNTHETIC]",
+            "role": "AUDITOR",
+            "bureau": "CENTRAL_ADMIN",
+            "designation": "Read-Only Compliance & Performance Auditor",
+            "phone": "+91 11 2958 1099"
         }
     ]
 

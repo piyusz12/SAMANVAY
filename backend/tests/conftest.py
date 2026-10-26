@@ -59,6 +59,30 @@ def admin_token(db_session):
     return create_access_token(subject=user.id)
 
 @pytest.fixture
-def officer_token(db_session):
-    user = db_session.query(User).filter(User.role == "CASE_OFFICER").first()
+def rb_admin_token(db_session):
+    user = db_session.query(User).filter(User.email == "head.rb@samanvay.aicte.gov.in").first()
     return create_access_token(subject=user.id)
+
+@pytest.fixture
+def pgrc_admin_token(db_session):
+    user = db_session.query(User).filter(User.email == "head.pgrc@samanvay.aicte.gov.in").first()
+    return create_access_token(subject=user.id)
+
+@pytest.fixture
+def rb_officer_token(db_session):
+    user = db_session.query(User).filter(User.email == "officer.rb@samanvay.aicte.gov.in").first()
+    return create_access_token(subject=user.id)
+
+@pytest.fixture
+def pgrc_officer_token(db_session):
+    user = db_session.query(User).filter(User.email == "officer.pgrc@samanvay.aicte.gov.in").first()
+    return create_access_token(subject=user.id)
+
+@pytest.fixture
+def auditor_token(db_session):
+    user = db_session.query(User).filter(User.role == "AUDITOR").first()
+    return create_access_token(subject=user.id)
+
+@pytest.fixture
+def officer_token(rb_officer_token):
+    return rb_officer_token

@@ -46,7 +46,8 @@ def create_rfc7807_error_response(
     title: str,
     detail: str,
     error_code: str = "ERROR",
-    extra: Optional[Dict[str, Any]] = None
+    extra: Optional[Dict[str, Any]] = None,
+    headers: Optional[Dict[str, str]] = None
 ) -> JSONResponse:
     req_id = request_id_ctx_var.get()
     content = {
@@ -60,7 +61,7 @@ def create_rfc7807_error_response(
     }
     if extra:
         content["extra"] = extra
-    return JSONResponse(status_code=status_code, content=content)
+    return JSONResponse(status_code=status_code, content=content, headers=headers)
 
 async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
     logger.warning(f"AppException [{exc.error_code}]: {exc.detail}")
@@ -78,7 +79,8 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
         status_code=exc.status_code,
         title="HTTP Error",
         detail=str(exc.detail),
-        error_code=f"HTTP_{exc.status_code}"
+        error_code=f"HTTP_{exc.status_code}",
+        headers=exc.headers
     )
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:

@@ -62,6 +62,20 @@ const DEMO_PERSONAS = [
     role: 'CASE_OFFICER',
     bureau: 'PGRC',
     designation: 'Grievance Redressal Officer'
+  },
+  {
+    email: 'bureau.officer.rb@samanvay.aicte.gov.in',
+    name: 'Meera Swaminathan [SYNTHETIC]',
+    role: 'BUREAU_OFFICER',
+    bureau: 'REGULATION_BUREAU',
+    designation: 'Section Officer / Reviewer'
+  },
+  {
+    email: 'auditor@samanvay.aicte.gov.in',
+    name: 'Sh. N. K. Sinha [SYNTHETIC]',
+    role: 'AUDITOR',
+    bureau: 'CENTRAL_ADMIN',
+    designation: 'Read-Only Compliance & Performance Auditor'
   }
 ];
 

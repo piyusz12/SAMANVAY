@@ -28,6 +28,7 @@ from backend.app.api.similarity import router as similarity_router
 from backend.app.api.movements import router as movements_router
 from backend.app.api.analytics import router as analytics_router
 from backend.app.api.audit import router as audit_router
+from backend.app.api.admin import router as admin_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -95,3 +96,4 @@ app.include_router(similarity_router, prefix=settings.API_V1_STR)
 app.include_router(movements_router, prefix=settings.API_V1_STR)
 app.include_router(analytics_router, prefix=settings.API_V1_STR)
 app.include_router(audit_router, prefix=settings.API_V1_STR)
+app.include_router(admin_router, prefix=settings.API_V1_STR)

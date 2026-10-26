@@ -41,8 +41,8 @@ def test_create_complaint(client):
     assert created["days_open"] == 0
 
 def test_status_transition(client, officer_token):
-    # Get a complaint to update
-    list_res = client.get("/api/v1/complaints")
+    # Get a complaint in officer's bureau (REGULATION_BUREAU)
+    list_res = client.get("/api/v1/complaints?bureau=REGULATION_BUREAU")
     complaint_id = list_res.json()["items"][0]["id"]
 
     update_payload = {

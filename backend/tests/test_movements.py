@@ -1,6 +1,6 @@
 def test_inter_bureau_transfer_lifecycle(client, officer_token, admin_token):
-    # Find a complaint to transfer
-    complaint = client.get("/api/v1/complaints?bureau=PGRC").json()["items"][0]
+    # Find a complaint to transfer from officer's bureau
+    complaint = client.get("/api/v1/complaints?bureau=REGULATION_BUREAU").json()["items"][0]
     c_id = complaint["id"]
 
     transfer_req = {

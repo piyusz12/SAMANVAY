@@ -4,7 +4,13 @@ from backend.app.core.datetime_util import utc_now
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
-from backend.app.api.deps import get_db, get_current_user, require_roles
+from backend.app.api.deps import (
+    get_db,
+    get_current_user,
+    require_roles,
+    require_not_auditor,
+    normalize_role
+)
 from backend.app.models.case_movement import CaseMovement
 from backend.app.models.complaint import Complaint
 from backend.app.models.user import User
@@ -64,10 +70,29 @@ def request_bureau_transfer(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Initiate an inter-bureau transfer or co-handling request for a complaint file."""
-    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    """
+    Initiate an inter-bureau transfer or co-handling request for a complaint file.
+    Enforces bureau scope: Only officers belonging to the handling bureau (or Super Admin) can initiate.
+    """
+    user_role = normalize_role(current_user.role)
+    if user_role == "AUDITOR":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Read-only auditors cannot initiate inter-bureau transfers."
+        )
+
+    complaint = db.query(Complaint).filter(
+        Complaint.id == complaint_id,
+        Complaint.is_deleted == False
+    ).first()
     if not complaint:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Complaint not found.")
+
+    if user_role != "SUPER_ADMIN" and complaint.bureau != current_user.bureau:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied: You belong to {current_user.bureau} and cannot initiate transfer for a case managed by {complaint.bureau}."
+        )
 
     if complaint.bureau == payload.to_bureau:
         raise HTTPException(
@@ -121,11 +146,11 @@ def decide_transfer_request(
     movement_id: int,
     payload: TransferDecisionSchema,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(["BUREAU_HEAD", "SUPER_ADMIN"]))
+    current_user: User = Depends(require_roles(["BUREAU_ADMIN", "BUREAU_HEAD", "SUPER_ADMIN"]))
 ):
     """
     Accept or Reject inter-bureau transfer.
-    If accepted, transfers case authority and updates handling bureau atomically.
+    Strictly restricted to the Target Bureau Administrator or Super Admin.
     """
     movement = db.query(CaseMovement).filter(CaseMovement.id == movement_id).first()
     if not movement:
@@ -133,6 +158,15 @@ def decide_transfer_request(
 
     if movement.status != "PENDING_APPROVAL":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Request already {movement.status}.")
+
+    user_role = normalize_role(current_user.role)
+
+    # Enforce that only target bureau administrator can accept/reject the transfer
+    if user_role != "SUPER_ADMIN" and current_user.bureau != movement.to_bureau:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied: Transfer is addressed to {movement.to_bureau}. You belong to {current_user.bureau}."
+        )
 
     movement.status = payload.decision
     movement.decided_by_id = current_user.id
