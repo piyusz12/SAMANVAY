@@ -65,13 +65,15 @@ async def lifespan(app: FastAPI):
 
     logger.info("Application shutdown complete.")
 
+docs_enabled = settings.DEBUG or settings.APP_ENV in ("development", "test")
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Integrated Dashboard for Monitoring and Tracking Institution-Related Complaint Cases Across AICTE Bureaus/Cells (SIH PS 26264)",
     version=settings.VERSION,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    docs_url=f"{settings.API_V1_STR}/docs",
-    redoc_url=f"{settings.API_V1_STR}/redoc",
+    openapi_url=f"{settings.API_V1_STR}/openapi.json" if docs_enabled else None,
+    docs_url=f"{settings.API_V1_STR}/docs" if docs_enabled else None,
+    redoc_url=f"{settings.API_V1_STR}/redoc" if docs_enabled else None,
     lifespan=lifespan
 )
 
@@ -79,7 +81,7 @@ app = FastAPI(
 app.add_middleware(RequestContextMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, Index
 from sqlalchemy.orm import relationship
 from backend.app.database import Base
 from backend.app.core.datetime_util import utc_now
@@ -13,6 +13,10 @@ def normalize_name(name: str) -> str:
 
 class Institution(Base):
     __tablename__ = "institutions"
+    __table_args__ = (
+        Index("ix_institutions_deleted_region", "is_deleted", "region"),
+        Index("ix_institutions_deleted_name", "is_deleted", "name"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     aicte_id = Column(String(64), unique=True, index=True, nullable=False)  # e.g. 1-10972412

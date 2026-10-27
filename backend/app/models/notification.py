@@ -1,10 +1,14 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from backend.app.database import Base
 from backend.app.core.datetime_util import utc_now
 
 class Notification(Base):
     __tablename__ = "notifications"
+    __table_args__ = (
+        Index("ix_notifications_user_read", "user_id", "is_read"),
+        Index("ix_notifications_bureau_read", "target_bureau", "is_read"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
@@ -34,6 +38,9 @@ class Notification(Base):
 
 class NotificationDeliveryAttempt(Base):
     __tablename__ = "notification_delivery_attempts"
+    __table_args__ = (
+        Index("ix_notif_attempts_status_channel", "status", "channel"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     notification_id = Column(Integer, ForeignKey("notifications.id", ondelete="CASCADE"), nullable=False, index=True)

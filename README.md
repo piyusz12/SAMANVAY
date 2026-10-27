@@ -8,72 +8,63 @@ SAMANVAY is a production-grade, secure, integrated complaint coordination and tr
 ## 1. Monorepo Repository Structure
 
 ```
-c:\SAMANVAY\
-├── backend\                   # FastAPI Application Core
-│   ├── alembic\               # Database schema version migrations
-│   │   ├── env.py
-│   │   ├── script.py.mako
-│   │   └── versions\          # Version migration files (851cb2ae3d38_initial_schema.py)
-│   ├── app\
-│   │   ├── api\               # REST API Routers
-│   │   │   ├── health.py      # Health & DB diagnostic probes
-│   │   │   ├── auth.py        # JWT authentication & profile
-│   │   │   ├── institutions.py# Institution registry & 360° dossier
-│   │   │   ├── complaints.py  # Complaint lifecycle CRUD & uploads
-│   │   │   ├── conflicts.py   # Master Cross-Bureau Conflict Radar
-│   │   │   ├── similarity.py  # Explainable AI similarity & linkages
-│   │   │   ├── movements.py   # Inter-bureau transfers & co-handling
-│   │   │   ├── analytics.py   # Bureau KPIs & regional matrix
-│   │   │   └── audit.py       # Regulatory audit ledger & notifications
-│   │   ├── core\              # Infrastructure, Middleware & Error Handling
-│   │   │   ├── logging.py     # Structured logging with request_id context
-│   │   │   ├── middleware.py  # Request ID injection & latency measurement
-│   │   │   ├── errors.py      # Centralized RFC 7807 error envelopes
-│   │   │   └── db_check.py    # Database connection validator & diagnostics
-│   │   ├── models\            # SQLAlchemy Relational Entities (7 tables)
-│   │   ├── schemas\           # Pydantic v2 typed contracts & validation
-│   │   ├── services\          # Domain services (Radar, NLP, Workflow, Audit)
-│   │   ├── config.py          # Pydantic-Settings with actionable startup validation
-│   │   ├── database.py        # Dual-dialect database engine & session maker
-│   │   └── main.py            # FastAPI application lifespan & middleware assembly
-│   ├── tests\                 # Comprehensive automated Pytest suite (19 tests)
-│   ├── requirements.txt       # Pinned reproducible dependencies
-│   ├── requirements-dev.txt   # Development and linting dependencies
-│   ├── .env.example           # Documented backend environment example
-│   └── alembic.ini            # Alembic migration configuration
-├── frontend\                  # Vite + React Executive UI
-│   ├── src\
-│   │   ├── components\        # Modular interactive UI views
-│   │   │   ├── ExecutiveOverview.jsx      # KPIs, bureau matrix, hotspot radar
-│   │   │   ├── ConflictRadarView.jsx      # Live multi-bureau collision cards
-│   │   │   ├── CasesRepositoryView.jsx    # Complaints table with SLA badges
-│   │   │   ├── ComplaintDetailModal.jsx   # Case inspector, status transitions, uploads
-│   │   │   ├── InstitutionDossierView.jsx # 360° dossier by AICTE Permanent ID
-│   │   │   ├── AISimilarityView.jsx       # Explainable NLP matching & linkage
-│   │   │   ├── TransfersView.jsx          # Inter-bureau transfer approval queue
-│   │   │   ├── LodgeComplaintView.jsx     # Intake portal with pre-check duplicate radar
-│   │   │   ├── AuditTrailView.jsx         # Immutable regulatory event ledger
-│   │   │   └── HealthStatusModal.jsx      # Live system & DB diagnostics dialog
-│   │   ├── services\          # Typed API client
-│   │   ├── App.jsx            # Main app controller with persona switcher
-│   │   └── index.css          # Bespoke executive design system (dark/light)
-│   ├── package.json           # Frontend dependencies & npm scripts
-│   ├── vite.config.js         # Vite dev server with /api proxy to port 8000
-│   └── .env.example           # Documented frontend environment example
-├── docs\                      # Complete Phase 01 System Specifications
-│   ├── requirements.md        # Functional (FR-01 to FR-10) and Non-Functional specs
-│   ├── architecture.md        # Topology, sequence flows, ER diagram, clean architecture
-│   ├── user-flows.md          # 7 detailed user journeys with Mermaid flowcharts
-│   ├── role-permission-matrix.md # 5 prototype roles, bureau scoping, CRUD matrix
-│   ├── acceptance-criteria.md # Traceability matrix & Gherkin test scenarios
-│   ├── api-contract-outline.md# OpenAPI contract outline & RFC 7807 error format
-│   └── threat-model.md        # STRIDE security analysis & whistleblower privacy
-├── infrastructure\            # Container & Deployment Infrastructure
-│   ├── docker-compose.yml     # Local PostgreSQL 16 + pgAdmin container services
-│   └── init-db.sql            # PostgreSQL schema initialization script
-├── docker-compose.yml         # Root Docker Compose shortcut
-├── .env.example               # Root documented environment template
-└── README.md                  # This setup and operational runbook
+SAMANVAY/
+├── frontend/
+│   ├── src/
+│   │   ├── app/                   # App container & main layout controller
+│   │   ├── components/            # Modular reusable UI views & modals
+│   │   ├── features/              # Feature modules & domain views
+│   │   │   ├── auth/              # Auth personas, RBAC permission checks
+│   │   │   ├── institutions/      # Institution registry & 360° dossier
+│   │   │   ├── complaints/        # Complaint intake, repository, file transfers
+│   │   │   ├── overlaps/          # Explainable AI similarity & Conflict Radar
+│   │   │   ├── coordination/      # Joint inquiry workspaces & action plans
+│   │   │   ├── notifications/     # Citizen's Charter SLA alerts & escalations
+│   │   │   └── reports/           # Executive KPI dashboards & audit ledger
+│   │   ├── lib/                   # API client, utilities, and date formatters
+│   │   └── types/                 # Domain constants, bureaus, and statuses
+│   ├── tests/                     # Frontend component tests documentation
+│   ├── package.json               # Frontend dependencies & npm scripts
+│   ├── vite.config.js             # Vite configuration with /api reverse proxy
+│   └── .env.example               # Frontend environment template
+├── backend/
+│   ├── app/
+│   │   ├── api/                   # REST API Routers (auth, complaints, conflicts, etc.)
+│   │   ├── core/                  # Structured logging, middleware, RFC 7807 errors
+│   │   ├── models/                # SQLAlchemy relational database entities
+│   │   ├── schemas/               # Pydantic v2 typed request/response contracts
+│   │   ├── repositories/          # Data access layer & query optimization
+│   │   ├── services/              # Domain services (Radar, NLP, Workflow, Audit)
+│   │   ├── workers/               # Background SLA scheduler & delivery workers
+│   │   └── main.py                # FastAPI application lifespan & middleware assembly
+│   ├── migrations/                # Database schema version migrations (Alembic)
+│   ├── tests/                     # 163 automated Pytest suites & benchmarks
+│   ├── requirements.txt           # Pinned production dependencies
+│   ├── requirements-dev.txt       # Development and linting dependencies
+│   ├── .env.example               # Backend environment template
+│   └── alembic.ini                # Alembic migration configuration
+├── infrastructure/
+│   ├── docker/                    # Docker Compose stacks, Nginx proxy, DB init
+│   ├── deployment/                # Production deployment runbook, deploy/rollback scripts
+│   └── scripts/                   # System automation, backup, and restore routines
+├── docs/                          # System Specifications & Evaluation Guides
+│   ├── architecture.md            # Topology, sequence flows, ER diagram, clean architecture
+│   ├── user-flows.md              # Detailed user journeys with Mermaid flowcharts
+│   ├── role-permission-matrix.md  # Prototype roles, bureau scoping, CRUD matrix
+│   ├── threat-model.md            # STRIDE security analysis & whistleblower privacy
+│   ├── acceptance-criteria.md     # Traceability matrix & Gherkin test scenarios
+│   └── SIH_DEMO_AND_FINAL_ACCEPTANCE_GUIDE.md # 5-7 min script & acceptance checklist
+├── scripts/                       # Top-level operational CLI entrypoints
+│   ├── seed_demo_data.py          # Synthetic dataset generator CLI
+│   ├── run_benchmarks.py          # Latency benchmark runner CLI
+│   ├── run_worker.py              # Background worker daemon runner
+│   ├── backup.py                  # Database backup CLI with SHA-256 validation
+│   ├── restore.py                 # Database restore CLI with integrity verification
+│   └── migrate.py                 # Database schema migration CLI
+├── docker-compose.yml             # Root Docker Compose service definitions
+├── .env.example                   # Root documented environment template
+├── .gitignore                     # Git ignore rules
+└── README.md                      # Setup, architecture, and operational runbook
 ```
 
 ---

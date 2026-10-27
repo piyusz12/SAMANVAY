@@ -1,6 +1,6 @@
 import statistics
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Set
+from typing import Dict, Any, List, Optional, Set, Tuple
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_, and_
@@ -51,7 +51,10 @@ UNDER_PROCESS_STATUSES: Set[str] = {
     "UNDER_INQUIRY",
     "SHOW_CAUSE_ISSUED",
     "HEARING_SCHEDULED",
-    "COMMITTEE_REVIEW"
+    "COMMITTEE_REVIEW",
+    "UNDER_REVIEW",
+    "IN_PROGRESS",
+    "ESCALATED"
 }
 
 DISPOSED_STATUSES: Set[str] = {
@@ -77,6 +80,18 @@ def parse_iso_datetime(dt_str: Optional[str]) -> Optional[datetime]:
     except Exception:
         return None
 
+import threading
+import time
+
+_DASHBOARD_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+_DASHBOARD_CACHE_LOCK = threading.Lock()
+_CACHE_TTL_SECONDS = 30.0
+
+def invalidate_analytics_cache():
+    """Invalidates the in-memory dashboard analytics cache."""
+    with _DASHBOARD_CACHE_LOCK:
+        _DASHBOARD_CACHE.clear()
+
 def get_dashboard_overview(
     db: Session,
     current_user: Optional[User] = None,
@@ -93,6 +108,7 @@ def get_dashboard_overview(
     Computes comprehensive, role-aware dashboard metrics for SAMANVAY.
     Enforces bureau-scoped data isolation, precise entity separation,
     non-overlapping status partitions, and multi-dimensional filtering.
+    Optimized with short-TTL thread-safe memoization.
     """
     user_role = normalize_role(current_user.role) if current_user else "SUPER_ADMIN"
     user_bureau = current_user.bureau if current_user else None
@@ -110,6 +126,17 @@ def get_dashboard_overview(
     else:
         if bureau and bureau != "ALL":
             effective_bureau = bureau
+
+    cache_key = (
+        f"{user_role}:{effective_bureau}:{region}:{status_filter}:{category}:"
+        f"{assigned_officer_id}:{institution_id}:{date_from}:{date_to}"
+    )
+    now_ts = time.time()
+    with _DASHBOARD_CACHE_LOCK:
+        if cache_key in _DASHBOARD_CACHE:
+            ts, cached_val = _DASHBOARD_CACHE[cache_key]
+            if (now_ts - ts) < _CACHE_TTL_SECONDS:
+                return cached_val
 
     # 2. Build Base Complaint Query with Authorized Filters
     query = db.query(Complaint).filter(Complaint.is_deleted == False)
@@ -428,7 +455,7 @@ def get_dashboard_overview(
     # Pending transfers
     pending_transfers_count = db.query(CaseMovement).filter(CaseMovement.status == "PENDING_APPROVAL").count()
 
-    return {
+    result = {
         "user_scope_bureau": user_bureau if user_role not in ("SUPER_ADMIN", "AUDITOR") else None,
         "user_role": user_role,
         "total_complaints_received": total_complaints_received,
@@ -457,3 +484,8 @@ def get_dashboard_overview(
         "resolved_complaints": disposed_complaints,
         "pending_transfers_count": pending_transfers_count
     }
+
+    with _DASHBOARD_CACHE_LOCK:
+        _DASHBOARD_CACHE[cache_key] = (now_ts, result)
+
+    return result

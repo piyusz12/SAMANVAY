@@ -280,22 +280,35 @@ def evaluate_stage4_semantic_similarity(
 ) -> Dict[str, Any]:
     """
     Stage 4: Text embeddings and semantic similarity using TF-IDF / N-gram cosine vectors.
+    Features fast token screening to avoid vectorizer instantiation on completely disjoint texts.
     """
-    corpus = [source_text.strip(), target_text.strip()]
-    if not corpus[0] or not corpus[1]:
+    s_clean = (source_text or "").strip()
+    t_clean = (target_text or "").strip()
+    if not s_clean or not t_clean:
         return {"score": 0.0, "reasons": []}
 
+    # Fast-path: Token pre-screening
+    s_tokens = set(re.findall(r'[a-zA-Z]{3,}', s_clean.lower())) - STOPWORDS
+    t_tokens = set(re.findall(r'[a-zA-Z]{3,}', t_clean.lower())) - STOPWORDS
+    common_tokens = s_tokens & t_tokens
+
+    # If texts share zero domain tokens and are moderately long, word similarity is 0.0
+    if not common_tokens and len(s_clean) > 40 and len(t_clean) > 40:
+        return {"score": 0.0, "reasons": []}
+
+    corpus = [s_clean, t_clean]
     try:
         vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words='english', max_features=1500)
         tfidf_matrix = vectorizer.fit_transform(corpus)
         word_sim = float(cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0])
 
-        # Sub-word char n-grams for morphological inflection matching
-        char_vectorizer = TfidfVectorizer(analyzer='char_wb', ngram_range=(3, 4))
-        char_matrix = char_vectorizer.fit_transform(corpus)
-        char_sim = float(cosine_similarity(char_matrix[0:1], char_matrix[1:2])[0][0])
-
-        sim = max(word_sim, (word_sim * 0.4 + char_sim * 0.6))
+        if word_sim > 0.05 or common_tokens:
+            char_vectorizer = TfidfVectorizer(analyzer='char_wb', ngram_range=(3, 4))
+            char_matrix = char_vectorizer.fit_transform(corpus)
+            char_sim = float(cosine_similarity(char_matrix[0:1], char_matrix[1:2])[0][0])
+            sim = max(word_sim, (word_sim * 0.4 + char_sim * 0.6))
+        else:
+            sim = word_sim
     except Exception:
         sim = 0.0
 

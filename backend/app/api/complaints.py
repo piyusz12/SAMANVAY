@@ -4,8 +4,9 @@ import hashlib
 from typing import Optional, List
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Request, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, desc
+from backend.app.core.datetime_util import utc_now
 from backend.app.api.deps import (
     get_db,
     get_current_user,
@@ -183,20 +184,27 @@ def list_complaints(
     else:
         query = query.order_by(sort_col.desc())
 
-    all_items = query.all()
-    
-    # Filter overdue if requested
+    # Filter overdue at the SQL layer if requested
     if is_overdue is not None:
-        filtered = []
-        for c in all_items:
-            _, overdue_flag, _ = calculate_sla_details(c)
-            if overdue_flag == is_overdue:
-                filtered.append(c)
-        all_items = filtered
+        now = utc_now()
+        if is_overdue:
+            query = query.filter(
+                Complaint.sla_due_date.isnot(None),
+                Complaint.sla_due_date < now,
+                ~Complaint.status.in_(["DISPOSED", "RESOLVED"])
+            )
+        else:
+            query = query.filter(
+                or_(
+                    Complaint.status.in_(["DISPOSED", "RESOLVED"]),
+                    Complaint.sla_due_date.is_(None),
+                    Complaint.sla_due_date >= now
+                )
+            )
 
-    total = len(all_items)
+    total = query.count()
     start_idx = (page - 1) * page_size
-    paged_items = all_items[start_idx : start_idx + page_size]
+    paged_items = query.options(joinedload(Complaint.institution)).offset(start_idx).limit(page_size).all()
 
     return ComplaintListResponse(
         total=total,

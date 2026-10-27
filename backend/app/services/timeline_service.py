@@ -13,6 +13,7 @@ from backend.app.models.case_movement import CaseMovement
 from backend.app.models.evidence_attachment import EvidenceAttachment
 from backend.app.models.follow_up_task import FollowUpTask
 from backend.app.models.audit_log import AuditLog
+from backend.app.core.datetime_util import utc_now
 
 def compile_case_timeline(db: Session, complaint_id: int) -> List[Dict[str, Any]]:
     """

@@ -66,7 +66,7 @@ def update_alert_config(db: Session, updates: AlertConfigUpdate, user_id: Option
     for key, val in fields.items():
         if val is None:
             continue
-        v_type = "JSON" if isinstance(val, (list, dict)) else "INTEGER" if isinstance(val, int) else "BOOLEAN" if isinstance(val, bool) else "STRING"
+        v_type = "JSON" if isinstance(val, (list, dict)) else "BOOLEAN" if isinstance(val, bool) else "INTEGER" if isinstance(val, int) else "STRING"
         v_str = json.dumps(val) if isinstance(val, (list, dict)) else str(val)
         
         row = db.query(SystemConfig).filter(SystemConfig.config_key == key).first()
@@ -597,6 +597,9 @@ def retry_failed_deliveries(
             html_body=html_body
         )
 
+        # Mark previous failed attempt as retried to avoid infinite retry loops
+        attempt.status = "RETRIED"
+
         # Create new delivery attempt record for audit trail
         new_attempt = NotificationDeliveryAttempt(
             notification_id=notif.id,
@@ -630,6 +633,9 @@ def run_scheduled_deadline_checks(
     Accepts controllable clock 'current_time' for automated testing.
     """
     now = current_time or utc_now()
+    if now.tzinfo is not None:
+        from datetime import timezone
+        now = now.astimezone(timezone.utc).replace(tzinfo=None)
     cfg = get_alert_config(db)
     all_logs: List[str] = []
 

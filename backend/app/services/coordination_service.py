@@ -2,7 +2,7 @@ import json
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy import desc, or_, and_
 
 from backend.app.core.datetime_util import utc_now
@@ -151,9 +151,16 @@ def get_coordination_workspaces(
 ) -> List[CoordinationWorkspaceItemOut]:
     """
     Lists coordination workspaces for related complaints across authorized bureaus.
+    Optimized with eager relationships to prevent N+1 query overhead.
     """
     role = normalize_role(current_user.role)
-    query = db.query(CaseLinkage).order_by(desc(CaseLinkage.updated_at))
+    query = db.query(CaseLinkage).options(
+        joinedload(CaseLinkage.source_complaint).joinedload(Complaint.institution),
+        joinedload(CaseLinkage.source_complaint).joinedload(Complaint.assigned_officer),
+        joinedload(CaseLinkage.target_complaint).joinedload(Complaint.institution),
+        joinedload(CaseLinkage.target_complaint).joinedload(Complaint.assigned_officer),
+        selectinload(CaseLinkage.follow_up_tasks)
+    ).order_by(desc(CaseLinkage.updated_at))
 
     if active_only:
         query = query.filter(CaseLinkage.is_active == True)
@@ -163,30 +170,28 @@ def get_coordination_workspaces(
 
     linkages = query.all()
     results: List[CoordinationWorkspaceItemOut] = []
+    now = utc_now()
+    now_dt = datetime.fromisoformat(now.isoformat()) if hasattr(now, "isoformat") else now
 
     for l in linkages:
-        src = db.query(Complaint).filter(Complaint.id == l.source_complaint_id).first()
-        tgt = db.query(Complaint).filter(Complaint.id == l.target_complaint_id).first()
+        src = l.source_complaint
+        tgt = l.target_complaint
         if not src or not tgt:
             continue
 
         # Bureau access control
         if role not in ("SUPER_ADMIN", "AUDITOR"):
-            if current_user.bureau not in (src.bureau, tgt.bureau):
+            user_bureau = (current_user.bureau or "").strip()
+            if user_bureau not in (src.bureau, tgt.bureau):
                 continue
 
-        inst = db.query(Institution).filter(Institution.id == src.institution_id).first()
-        src_officer = db.query(User).filter(User.id == src.assigned_officer_id).first() if src.assigned_officer_id else None
-        tgt_officer = db.query(User).filter(User.id == tgt.assigned_officer_id).first() if tgt.assigned_officer_id else None
+        inst = src.institution
+        src_officer = src.assigned_officer
+        tgt_officer = tgt.assigned_officer
 
-        # Calculate outstanding / overdue follow-up tasks
-        tasks = db.query(FollowUpTask).filter(
-            FollowUpTask.linkage_id == l.id,
-            FollowUpTask.status.in_(["PENDING", "IN_PROGRESS", "OVERDUE"])
-        ).all()
-        now = utc_now()
-        now_dt = datetime.fromisoformat(now.isoformat()) if hasattr(now, "isoformat") else now
-        overdue_count = sum(1 for t in tasks if t.deadline < now_dt)
+        # Calculate outstanding / overdue follow-up tasks from preloaded collection
+        tasks = [t for t in (l.follow_up_tasks or []) if t.status in ("PENDING", "IN_PROGRESS", "OVERDUE")]
+        overdue_count = sum(1 for t in tasks if t.deadline and t.deadline < now_dt)
 
         reasons = parse_json_safely(l.reasons_json)
 
@@ -506,6 +511,12 @@ def create_coordination_follow_up_task(
 
     check_bureau_coordination_access(current_user, src.bureau, tgt.bureau)
 
+    if payload.complaint_id and payload.complaint_id not in (src.id, tgt.id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Follow-up task must be linked to either the source or target complaint of this workspace."
+        )
+
     task_complaint_id = payload.complaint_id or src.id
     target_bureau = payload.target_bureau or linkage.lead_bureau or current_user.bureau
 
@@ -578,6 +589,14 @@ def update_coordination_task(
     task = db.query(FollowUpTask).filter(FollowUpTask.id == task_id).first()
     if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Follow-up task not found.")
+
+    if task.linkage_id:
+        linkage = db.query(CaseLinkage).filter(CaseLinkage.id == task.linkage_id).first()
+        if linkage:
+            src = db.query(Complaint).filter(Complaint.id == linkage.source_complaint_id).first()
+            tgt = db.query(Complaint).filter(Complaint.id == linkage.target_complaint_id).first()
+            if src and tgt:
+                check_bureau_coordination_access(current_user, src.bureau, tgt.bureau)
 
     if payload.status:
         task.status = payload.status.upper().strip()

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Text, ForeignKey, UniqueConstraint, Boolean
+from sqlalchemy import Column, Integer, String, Float, DateTime, Text, ForeignKey, UniqueConstraint, Boolean, Index
 from sqlalchemy.orm import relationship
 from backend.app.database import Base
 from backend.app.core.datetime_util import utc_now
@@ -42,6 +42,8 @@ class CaseLinkage(Base):
 
     __table_args__ = (
         UniqueConstraint("source_complaint_id", "target_complaint_id", "link_type", name="uq_case_linkage_pair"),
+        Index("ix_case_linkages_pair", "source_complaint_id", "target_complaint_id"),
+        Index("ix_case_linkages_active_status", "is_active", "status"),
     )
 
     source_complaint = relationship("Complaint", foreign_keys=[source_complaint_id])

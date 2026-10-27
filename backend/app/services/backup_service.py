@@ -205,7 +205,7 @@ class BackupService:
         protected_by_legal_hold = 0
 
         for c in deleted_cases:
-            has_held_evidence = any(a.legal_hold for a in c.evidence_attachments)
+            has_held_evidence = any(a.legal_hold for a in (c.attachments or []))
             if has_held_evidence:
                 protected_by_legal_hold += 1
             elif c.updated_at and c.updated_at < retention_threshold:

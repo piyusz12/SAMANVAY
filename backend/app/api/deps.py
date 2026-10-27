@@ -99,13 +99,15 @@ def get_optional_current_user(
     header_token: Optional[str] = Depends(oauth2_scheme)
 ) -> Optional[User]:
     """
-    Optional authentication dependency: returns User if valid token is provided,
-    otherwise returns None without raising 401.
+    Optional authentication dependency: returns User if valid token is provided.
+    If no credentials are provided, returns None.
+    If invalid/expired credentials are provided, raises HTTPException (401/403).
     """
-    try:
-        return get_current_user(request=request, db=db, header_token=header_token)
-    except HTTPException:
+    auth_header = request.headers.get("Authorization")
+    auth_cookie = request.cookies.get("access_token")
+    if not auth_header and not auth_cookie and not header_token:
         return None
+    return get_current_user(request=request, db=db, header_token=header_token)
 
 
 def require_roles(allowed_roles: List[str]):

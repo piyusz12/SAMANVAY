@@ -21,8 +21,13 @@ def parse_iso_datetime(dt_str: Optional[str]) -> Optional[datetime]:
     try:
         clean = dt_str.replace("Z", "+00:00")
         if len(clean) == 10:
-            return datetime.fromisoformat(clean + "T00:00:00")
-        return datetime.fromisoformat(clean)
+            dt = datetime.fromisoformat(clean + "T00:00:00")
+        else:
+            dt = datetime.fromisoformat(clean)
+        if dt.tzinfo is not None:
+            from datetime import timezone
+            dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+        return dt
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

@@ -4,6 +4,20 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) return 'vendor';
+            if (id.includes('lucide')) return 'icons';
+            return 'deps';
+          }
+        }
+      }
+    }
+  },
   test: {
     environment: 'jsdom',
     globals: true,

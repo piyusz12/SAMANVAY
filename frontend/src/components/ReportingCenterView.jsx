@@ -101,10 +101,10 @@ export default function ReportingCenterView({ currentUser }) {
               user_role: currentUser?.role || 'OFFICER',
               user_bureau: currentUser?.bureau || 'HQ',
               selected_filters: cleanParams,
-              record_count: resp.total_count || resp.complaints?.length || 0,
-              is_truncated: (resp.total_count || 0) > 25
+              record_count: resp.total ?? resp.total_count ?? (resp.items?.length || 0),
+              is_truncated: (resp.total ?? resp.total_count ?? 0) > 25
             },
-            data: resp.complaints || []
+            data: resp.items || resp.complaints || []
           };
           break;
         default:

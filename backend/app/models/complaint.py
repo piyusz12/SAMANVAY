@@ -1,10 +1,16 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from backend.app.database import Base
 from backend.app.core.datetime_util import utc_now
 
 class Complaint(Base):
     __tablename__ = "complaints"
+    __table_args__ = (
+        Index("ix_complaints_deleted_bureau_status", "is_deleted", "bureau", "status"),
+        Index("ix_complaints_deleted_inst", "is_deleted", "institution_id"),
+        Index("ix_complaints_deleted_sla", "is_deleted", "sla_due_date"),
+        Index("ix_complaints_deleted_created", "is_deleted", "created_at"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     complaint_no = Column(String(64), unique=True, index=True, nullable=False)

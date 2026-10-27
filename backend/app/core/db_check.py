@@ -5,23 +5,26 @@ from sqlalchemy import text
 from backend.app.database import engine
 from backend.app.core.logging import logger
 
-def validate_database_connection(timeout_seconds: float = 3.0) -> Tuple[bool, Dict[str, Any]]:
+def validate_database_connection(timeout_seconds: float = 3.0, db_url: str = None) -> Tuple[bool, Dict[str, Any]]:
     """
     Validates database connectivity by executing a raw test query.
     Returns (is_connected, diagnostic_metadata).
     Produces actionable diagnostic error messages if connection fails.
     """
+    from sqlalchemy import create_engine
+    active_engine = create_engine(db_url, pool_pre_ping=True) if db_url else engine
+
     start = time.perf_counter()
-    dialect_name = engine.dialect.name
-    url_str = str(engine.url)
+    dialect_name = active_engine.dialect.name
+    url_str = str(active_engine.url)
 
     # Obfuscate password in URL for safe logging
     safe_url = url_str
-    if engine.url.password:
-        safe_url = url_str.replace(str(engine.url.password), "********")
+    if active_engine.url.password:
+        safe_url = url_str.replace(str(active_engine.url.password), "********")
 
     try:
-        with engine.connect() as conn:
+        with active_engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         latency_ms = (time.perf_counter() - start) * 1000.0
         return True, {
@@ -55,6 +58,9 @@ def validate_database_connection(timeout_seconds: float = 3.0) -> Tuple[bool, Di
         }
         logger.error(f"Database validation FAILED for {safe_url}: {error_msg}\nACTION REQUIRED: {suggestion}")
         return False, actionable_diagnostic
+    finally:
+        if db_url and active_engine is not engine:
+            active_engine.dispose()
 
 if __name__ == "__main__":
     is_ok, diag = validate_database_connection()

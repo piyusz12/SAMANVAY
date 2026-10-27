@@ -44,7 +44,15 @@ AICTE_REGIONS = [
 ]
 
 OPEN_STATUSES = {"LODGED", "SCRUTINY_PENDING", "AWAITING_DOCUMENTS"}
-UNDER_PROCESS_STATUSES = {"UNDER_INQUIRY", "SHOW_CAUSE_ISSUED", "HEARING_SCHEDULED", "COMMITTEE_REVIEW"}
+UNDER_PROCESS_STATUSES = {
+    "UNDER_INQUIRY",
+    "SHOW_CAUSE_ISSUED",
+    "HEARING_SCHEDULED",
+    "COMMITTEE_REVIEW",
+    "UNDER_REVIEW",
+    "IN_PROGRESS",
+    "ESCALATED"
+}
 DISPOSED_STATUSES = {"RESOLVED", "DISPOSED", "REJECTED"}
 TRANSFERRED_STATUSES = {"TRANSFERRED"}
 ACTIVE_STATUSES = OPEN_STATUSES | UNDER_PROCESS_STATUSES
@@ -117,7 +125,12 @@ class ReportingService:
     ):
         effective_bureau = cls.enforce_bureau_authorization(user, bureau)
 
-        query = db.query(Complaint).join(Institution, Complaint.institution_id == Institution.id)
+        query = db.query(Complaint).join(
+            Institution, Complaint.institution_id == Institution.id
+        ).filter(
+            Complaint.is_deleted == False,
+            Institution.is_deleted == False
+        )
 
         if effective_bureau:
             query = query.filter(Complaint.bureau == effective_bureau)

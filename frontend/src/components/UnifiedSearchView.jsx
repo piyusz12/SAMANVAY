@@ -166,7 +166,7 @@ export default function UnifiedSearchView({
           bureau: selectedBureau,
           region: selectedRegion,
           category: selectedCategory,
-          status_filter: selectedStatus,
+          status: selectedStatus,
           page,
           page_size: pageSize
         });
@@ -185,7 +185,7 @@ export default function UnifiedSearchView({
           bureau: selectedBureau,
           region: selectedRegion,
           category: selectedCategory,
-          status_filter: selectedStatus,
+          status: selectedStatus,
           is_overdue: isOverdue ? 'true' : undefined,
           date_from: dateFrom || undefined,
           date_to: dateTo || undefined,

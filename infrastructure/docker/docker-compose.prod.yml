@@ -1,0 +1,138 @@
+# Symlink / mirror of root docker-compose.prod.yml
+# Please execute compose commands from the project root directory:
+# docker compose -f docker-compose.prod.yml up -d
+version: '3.8'
+
+services:
+  proxy:
+    image: nginx:1.25-alpine
+    container_name: samanvay-proxy
+    restart: always
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks:
+      - samanvay-net
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: samanvay-frontend
+    restart: always
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - samanvay-net
+
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: samanvay-backend
+    restart: always
+    expose:
+      - "8000"
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-samanvay_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-samanvay_prod}
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      - CORS_ORIGINS=${CORS_ORIGINS:-https://localhost,https://127.0.0.1}
+      - DEBUG=false
+      - SEED_SYNTHETIC_DATA=false
+      - LOG_FORMAT=json
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - BACKGROUND_WORKER_HEARTBEAT_PATH=/app/runtime/worker.heartbeat
+      - EVIDENCE_UPLOAD_DIR=/app/storage/evidence
+    volumes:
+      - evidence_storage:/app/storage/evidence
+      - worker_runtime:/app/runtime
+      - backups_storage:/app/storage/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/v1/health/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - samanvay-net
+
+  worker:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: samanvay-worker
+    command: ["python", "infrastructure/scripts/worker.py"]
+    restart: always
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-samanvay_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-samanvay_prod}
+      - BACKGROUND_WORKER_HEARTBEAT_PATH=/app/runtime/worker.heartbeat
+      - WORKER_INTERVAL_SECONDS=${WORKER_INTERVAL_SECONDS:-60}
+      - LOG_FORMAT=json
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - worker_runtime:/app/runtime
+      - evidence_storage:/app/storage/evidence:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    networks:
+      - samanvay-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: samanvay-postgres-prod
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-samanvay_prod}
+      - POSTGRES_USER=${POSTGRES_USER:-samanvay_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-samanvay_user} -d ${POSTGRES_DB:-samanvay_prod}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - samanvay-net
+
+volumes:
+  postgres_data:
+    name: samanvay_prod_postgres_data
+  evidence_storage:
+    name: samanvay_prod_evidence_storage
+  worker_runtime:
+    name: samanvay_prod_worker_runtime
+  backups_storage:
+    name: samanvay_prod_backups_storage
+
+networks:
+  samanvay-net:
+    name: samanvay-network
+    driver: bridge

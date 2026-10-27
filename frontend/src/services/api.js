@@ -64,13 +64,7 @@ export const api = {
 
   // Institutions
   getInstitutions: (params = {}) => {
-    const cleanParams = {};
-    Object.keys(params).forEach((k) => {
-      if (params[k] !== undefined && params[k] !== null && params[k] !== '' && params[k] !== 'ALL') {
-        cleanParams[k] = params[k];
-      }
-    });
-    const qs = new URLSearchParams(cleanParams).toString();
+    const qs = new URLSearchParams(cleanObject(params)).toString();
     return request(`/institutions${qs ? `?${qs}` : ''}`);
   },
   getInstitution: (id) => request(`/institutions/${id}`),
@@ -102,13 +96,7 @@ export const api = {
 
   // Complaints
   getComplaints: (params = {}) => {
-    const cleanParams = {};
-    Object.keys(params).forEach((k) => {
-      if (params[k] !== undefined && params[k] !== null && params[k] !== '' && params[k] !== 'ALL') {
-        cleanParams[k] = params[k];
-      }
-    });
-    const qs = new URLSearchParams(cleanParams).toString();
+    const qs = new URLSearchParams(cleanObject(params)).toString();
     return request(`/complaints${qs ? `?${qs}` : ''}`);
   },
   getComplaint: (id) => request(`/complaints/${id}`),
@@ -216,7 +204,7 @@ export const api = {
 
   // Case Coordination Workspace (Phase 08)
   getCoordinationWorkspaces: (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
+    const qs = new URLSearchParams(cleanObject(params)).toString();
     return request(`/coordination/workspaces${qs ? `?${qs}` : ''}`);
   },
   getCoordinationWorkspaceDetail: (id) =>
@@ -242,13 +230,13 @@ export const api = {
       body: JSON.stringify(data),
     }),
   getOutstandingCoordinationTasks: (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
+    const qs = new URLSearchParams(cleanObject(params)).toString();
     return request(`/coordination/tasks/outstanding${qs ? `?${qs}` : ''}`);
   },
 
   // Movements & Transfers
   getMovements: (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
+    const qs = new URLSearchParams(cleanObject(params)).toString();
     return request(`/movements${qs ? `?${qs}` : ''}`);
   },
   requestTransfer: (complaintId, data) =>
@@ -264,19 +252,19 @@ export const api = {
 
   // Analytics & KPIs
   getAnalyticsOverview: (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
+    const qs = new URLSearchParams(cleanObject(params)).toString();
     return request(`/analytics/overview${qs ? `?${qs}` : ''}`);
   },
 
   // Audit Logs
   getAuditLogs: (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
+    const qs = new URLSearchParams(cleanObject(params)).toString();
     return request(`/audit/logs${qs ? `?${qs}` : ''}`);
   },
 
   // Phase 11: Deadlines, Alerts & Escalations
   getNotifications: (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
+    const qs = new URLSearchParams(cleanObject(params)).toString();
     return request(`/notifications${qs ? `?${qs}` : ''}`);
   },
   getUnreadNotificationCount: () => request('/notifications/unread-count'),
@@ -308,15 +296,15 @@ export const api = {
 
   // Phase 10: Unified Search & Filtering
   unifiedSearch: (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
+    const qs = new URLSearchParams(cleanObject(params)).toString();
     return request(`/search/unified${qs ? `?${qs}` : ''}`);
   },
   searchComplaints: (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
+    const qs = new URLSearchParams(cleanObject(params)).toString();
     return request(`/search/complaints${qs ? `?${qs}` : ''}`);
   },
   searchInstitutions: (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
+    const qs = new URLSearchParams(cleanObject(params)).toString();
     return request(`/search/institutions${qs ? `?${qs}` : ''}`);
   },
 
@@ -401,11 +389,11 @@ export const api = {
   },
 };
 
-function cleanObject(obj) {
+function cleanObject(obj = {}) {
   const result = {};
   for (const [k, v] of Object.entries(obj)) {
-    if (v !== undefined && v !== null && v !== '') {
-      result[k] = v;
+    if (v !== undefined && v !== null && v !== '' && v !== 'ALL') {
+      result[k] = typeof v === 'string' ? v.trim() : v;
     }
   }
   return result;

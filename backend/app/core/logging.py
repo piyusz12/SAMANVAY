@@ -29,6 +29,9 @@ def scrub_sensitive_text(text: str) -> str:
         scrubbed = pattern.sub(replacement, scrubbed)
     return scrubbed
 
+# Backward-compatible alias
+sanitize_log_message = scrub_sensitive_text
+
 class SensitiveDataFilter(logging.Filter):
     """Logging filter that redacts credentials, secrets, and auth tokens from all log messages."""
     def filter(self, record: logging.LogRecord) -> bool:
@@ -41,8 +44,28 @@ class SensitiveDataFilter(logging.Filter):
                 record.args = {k: scrub_sensitive_text(str(v)) if isinstance(v, str) else v for k, v in record.args.items()}
         return True
 
+import json
+
+class JsonLogFormatter(logging.Formatter):
+    """Production JSON log formatter for centralized ingestion (ELK, CloudWatch, Datadog)."""
+    def format(self, record: logging.LogRecord) -> str:
+        req_id = request_id_ctx_var.get()
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        log_entry = {
+            "timestamp": ts,
+            "level": record.levelname,
+            "request_id": req_id,
+            "logger": record.name,
+            "message": scrub_sensitive_text(record.getMessage()),
+            "module": record.module,
+            "line": record.lineno
+        }
+        if record.exc_info:
+            log_entry["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_entry)
+
 class StructuredLogFormatter(logging.Formatter):
-    """Custom log formatter that injects request_id and ISO8601 timestamps."""
+    """Custom human-readable log formatter that injects request_id and ISO8601 timestamps."""
     def format(self, record: logging.LogRecord) -> str:
         record.request_id = request_id_ctx_var.get()
         if not hasattr(record, "iso_timestamp"):
@@ -51,13 +74,19 @@ class StructuredLogFormatter(logging.Formatter):
         return scrub_sensitive_text(formatted)
 
 def setup_logging(debug: bool = False) -> logging.Logger:
-    """Configures centralized structured logging with sensitive credential scrubbing."""
-    log_level = logging.DEBUG if debug else logging.INFO
+    """Configures centralized structured logging with sensitive credential scrubbing and JSON support."""
+    import os
+    level_name = os.getenv("LOG_LEVEL", "DEBUG" if debug else "INFO").upper()
+    log_level = getattr(logging, level_name, logging.INFO)
+    fmt = os.getenv("LOG_FORMAT", "standard").lower()
 
     handler = logging.StreamHandler(sys.stdout)
-    formatter = StructuredLogFormatter(
-        fmt="[%(iso_timestamp)s] [%(levelname)s] [req:%(request_id)s] %(name)s: %(message)s"
-    )
+    if fmt == "json":
+        formatter = JsonLogFormatter()
+    else:
+        formatter = StructuredLogFormatter(
+            fmt="[%(iso_timestamp)s] [%(levelname)s] [req:%(request_id)s] %(name)s: %(message)s"
+        )
     handler.setFormatter(formatter)
     handler.addFilter(SensitiveDataFilter())
 

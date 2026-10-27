@@ -10,6 +10,7 @@ from backend.app.models.case_assignment_history import CaseAssignmentHistory
 from backend.app.schemas.complaint import ComplaintCreate, ComplaintOut
 from backend.app.services.audit_service import log_audit_event
 from backend.app.services.overlap_service import trigger_conflict_notifications
+from backend.app.services.analytics_service import invalidate_analytics_cache
 from backend.app.core.datetime_util import utc_now
 
 BUREAU_PREFIX_MAP = {
@@ -189,6 +190,7 @@ def create_complaint(
 
     # Check if this creates a cross-bureau overlap and alert respective heads
     trigger_conflict_notifications(db, complaint)
+    invalidate_analytics_cache()
 
     return complaint
 
@@ -267,6 +269,7 @@ def update_complaint_status(
         commit=True
     )
 
+    invalidate_analytics_cache()
     return complaint
 
 def assign_officer(
@@ -342,4 +345,5 @@ def assign_officer(
         commit=True
     )
 
+    invalidate_analytics_cache()
     return complaint

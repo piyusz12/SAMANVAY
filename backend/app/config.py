@@ -21,7 +21,29 @@ class Settings(BaseSettings):
     # Database: Supports PostgreSQL or local SQLite fallback
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./samanvay.db")
     
+    # Logging & Observability
+    LOG_FORMAT: str = os.getenv("LOG_FORMAT", "standard")  # standard | json
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    BACKGROUND_WORKER_HEARTBEAT_PATH: str = os.getenv(
+        "BACKGROUND_WORKER_HEARTBEAT_PATH",
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "storage", "worker_heartbeat.json")
+    )
+
     # CORS: Explicit authorized origins (prevent wildcard with credentials)
+    @property
+    def cors_origins(self) -> List[str]:
+        env_origins = os.getenv("CORS_ORIGINS")
+        if env_origins:
+            return [o.strip() for o in env_origins.split(",") if o.strip()]
+        return [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:8000",
+            "http://127.0.0.1:8000"
+        ]
+
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
@@ -62,18 +84,26 @@ class Settings(BaseSettings):
     def validate_configuration(self):
         """Validates critical settings and emits actionable startup diagnostics."""
         if self.APP_ENV == "production":
-            if "insecure" in self.SECRET_KEY or "production-grade" in self.SECRET_KEY:
+            if self.DEBUG:
                 raise ValueError(
-                    "[CONFIGURATION ERROR] Insecure default SECRET_KEY detected in production environment! "
-                    "Generate a cryptographically secure random string (e.g. openssl rand -hex 32) "
-                    "and set SECRET_KEY in your .env or environment variables."
+                    "[CONFIGURATION ERROR] DEBUG mode must be False in production! Set DEBUG=False."
+                )
+            if self.SEED_SYNTHETIC_DATA:
+                raise ValueError(
+                    "[CONFIGURATION ERROR] SEED_SYNTHETIC_DATA must be False in production! Set SEED_SYNTHETIC_DATA=False."
+                )
+            sec_lower = self.SECRET_KEY.lower()
+            if len(self.SECRET_KEY) < 32 or any(w in sec_lower for w in ("insecure", "production-grade", "change-in-production", "secret")):
+                raise ValueError(
+                    "[CONFIGURATION ERROR] Insecure or short SECRET_KEY detected in production environment! "
+                    "Generate a cryptographically secure random string of at least 32 characters (e.g. openssl rand -hex 32) "
+                    "and set SECRET_KEY in your production environment variables."
                 )
             if self.DATABASE_URL.startswith("sqlite"):
-                import warnings
-                warnings.warn(
-                    "[CONFIGURATION WARNING] SQLite database specified in production environment! "
-                    "Please configure a production PostgreSQL instance via DATABASE_URL.",
-                    UserWarning
+                raise ValueError(
+                    "[CONFIGURATION ERROR] SQLite database specified in production environment! "
+                    "Production deployment requires a robust, managed PostgreSQL instance (e.g. postgresql://user:pass@host:5432/db). "
+                    "Configure DATABASE_URL accordingly."
                 )
 
     model_config = SettingsConfigDict(

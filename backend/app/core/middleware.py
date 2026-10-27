@@ -2,7 +2,8 @@ import time
 import uuid
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import Response, JSONResponse
+from fastapi import HTTPException
 from backend.app.core.logging import request_id_ctx_var, logger
 from backend.app.core.rate_limiter import global_api_rate_limiter
 from backend.app.config import settings
@@ -36,6 +37,13 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         if not is_test_env and not request.url.path.endswith("/health") and not request.url.path.startswith("/docs") and not request.url.path.startswith("/openapi"):
             try:
                 global_api_rate_limiter.check(client_ip)
+            except HTTPException as rate_exc:
+                request_id_ctx_var.reset(token)
+                return JSONResponse(
+                    status_code=rate_exc.status_code,
+                    content={"detail": rate_exc.detail},
+                    headers={"X-Request-ID": req_id, "Retry-After": "60"}
+                )
             except Exception as rate_exc:
                 request_id_ctx_var.reset(token)
                 raise rate_exc
