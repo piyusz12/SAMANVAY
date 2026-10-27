@@ -5,9 +5,13 @@ from backend.app.models.institution import Institution
 from backend.app.models.notification import Notification
 
 ACTIVE_STATUSES = [
+    "RECEIVED",
     "LODGED",
+    "UNDER_REVIEW",
     "SCRUTINY_PENDING",
+    "IN_PROGRESS",
     "UNDER_INQUIRY",
+    "AWAITING_INFORMATION",
     "SHOW_CAUSE_ISSUED",
     "HEARING_SCHEDULED",
     "TRANSFERRED",

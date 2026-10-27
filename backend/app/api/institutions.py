@@ -234,11 +234,35 @@ async def import_institutions_csv_dataset(
     Validates mandatory schema columns and executes anti-duplicate matching per record.
     Set dry_run=false to persist valid non-duplicate records.
     """
-    content = await file.read()
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file format. Only CSV files (.csv) are permitted."
+        )
+
+    MAX_CSV_SIZE = 10 * 1024 * 1024  # 10 MB limit
+    content = await file.read(MAX_CSV_SIZE + 1)
+    if len(content) > MAX_CSV_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="CSV file size exceeds the 10 MB maximum permitted limit."
+        )
+    if len(content) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded CSV file is empty (0 bytes)."
+        )
+
     try:
         csv_text = content.decode("utf-8")
     except UnicodeDecodeError:
-        csv_text = content.decode("latin-1")
+        try:
+            csv_text = content.decode("latin-1")
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Unable to decode CSV file content with UTF-8 or Latin-1 encoding."
+            )
 
     return import_institutions_csv(
         db=db,

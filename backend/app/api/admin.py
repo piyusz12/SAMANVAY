@@ -9,9 +9,18 @@ from backend.app.schemas.auth import UserOut
 from backend.app.schemas.system_config import SystemConfigOut, SystemConfigUpdate
 from backend.app.services.auth_service import get_password_hash
 from backend.app.services.audit_service import log_audit_event
+from backend.app.services.backup_service import BackupService
 from backend.app.core.datetime_util import utc_now
 
 router = APIRouter(prefix="/admin", tags=["Administration & User Management"])
+
+from pydantic import field_validator
+
+VALID_ROLES = {"SUPER_ADMIN", "BUREAU_ADMIN", "BUREAU_OFFICER", "CASE_OFFICER", "AUDITOR"}
+VALID_BUREAUS = {
+    "CENTRAL_ADMIN", "REGULATION_BUREAU", "PGRC", "APPROVAL_BUREAU",
+    "LEGAL_CELL", "VIGILANCE_CELL", "POLICY_BUREAU"
+}
 
 class AdminUserCreate(BaseModel):
     email: EmailStr
@@ -22,10 +31,46 @@ class AdminUserCreate(BaseModel):
     designation: Optional[str] = None
     phone: Optional[str] = None
 
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v: str) -> str:
+        norm = v.upper().strip()
+        if norm not in VALID_ROLES:
+            raise ValueError(f"Invalid role '{v}'. Allowed roles: {', '.join(sorted(VALID_ROLES))}")
+        return norm
+
+    @field_validator("bureau")
+    @classmethod
+    def validate_bureau(cls, v: str) -> str:
+        norm = v.upper().strip()
+        if norm not in VALID_BUREAUS:
+            raise ValueError(f"Invalid bureau '{v}'. Allowed bureaus: {', '.join(sorted(VALID_BUREAUS))}")
+        return norm
+
 class AdminUserUpdateRole(BaseModel):
     role: Optional[str] = None
     bureau: Optional[str] = None
     is_active: Optional[bool] = None
+
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            norm = v.upper().strip()
+            if norm not in VALID_ROLES:
+                raise ValueError(f"Invalid role '{v}'. Allowed roles: {', '.join(sorted(VALID_ROLES))}")
+            return norm
+        return v
+
+    @field_validator("bureau")
+    @classmethod
+    def validate_bureau(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            norm = v.upper().strip()
+            if norm not in VALID_BUREAUS:
+                raise ValueError(f"Invalid bureau '{v}'. Allowed bureaus: {', '.join(sorted(VALID_BUREAUS))}")
+            return norm
+        return v
 
 @router.get("/users", response_model=List[UserOut])
 def list_system_users(
@@ -161,3 +206,42 @@ def update_system_configuration(
         commit=True
     )
     return cfg
+
+# =========================================================================
+# BACKUP ACCESS & RETENTION RISK MANAGEMENT (PHASE 14)
+# =========================================================================
+
+@router.post("/backups/create")
+def create_database_backup(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(["SUPER_ADMIN"]))
+):
+    """
+    Creates an atomic database snapshot with SHA-256 integrity checksum.
+    Restricted strictly to Super Administrator.
+    """
+    return BackupService.create_database_backup(db, current_user)
+
+@router.get("/backups")
+def list_database_backups(
+    current_user: User = Depends(require_roles(["SUPER_ADMIN", "AUDITOR"]))
+):
+    """Lists available database backups with checksums and timestamps."""
+    return BackupService.list_backups(current_user)
+
+@router.post("/backups/verify/{filename}")
+def verify_backup_integrity(
+    filename: str,
+    current_user: User = Depends(require_roles(["SUPER_ADMIN", "AUDITOR"]))
+):
+    """Verifies the SHA-256 cryptographic integrity of an on-disk backup file."""
+    return BackupService.verify_backup_integrity(filename, current_user)
+
+@router.get("/retention/compliance")
+def evaluate_retention_compliance(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(["SUPER_ADMIN", "AUDITOR"]))
+):
+    """Evaluates retention status of soft-deleted records against statutory and legal hold policies."""
+    return BackupService.evaluate_retention_compliance(db, current_user)
+

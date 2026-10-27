@@ -38,6 +38,9 @@ class ComplaintCreate(BaseModel):
     category: str
     priority: str = "MEDIUM"
     sla_deadline_days: int = 30
+    sla_due_date: Optional[datetime] = None
+    received_date: Optional[datetime] = None
+    assigned_officer_id: Optional[int] = None
     internal_notes: Optional[str] = None
 
 class ComplaintUpdate(BaseModel):
@@ -50,12 +53,50 @@ class ComplaintUpdate(BaseModel):
 class StatusUpdateSchema(BaseModel):
     status: str
     action_taken: Optional[str] = "STATUS_UPDATE"
+    reason: Optional[str] = None
     notes: Optional[str] = None
     resolution_summary: Optional[str] = None
 
 class OfficerAssignSchema(BaseModel):
     officer_id: int
     assignment_notes: Optional[str] = None
+
+class OfficerReassignSchema(BaseModel):
+    officer_id: int
+    reassignment_reason: str
+
+class TimelineEventOut(BaseModel):
+    id: str
+    event_type: str
+    timestamp: datetime
+    title: str
+    description: Optional[str] = None
+    action_taken: Optional[str] = None
+    actor_name: Optional[str] = None
+    actor_role: Optional[str] = None
+    actor_bureau: Optional[str] = None
+    metadata: Optional[dict] = None
+
+class StatusTransitionOption(BaseModel):
+    status: str
+    label: str
+    category: str
+    description: str
+    requires_reason: bool
+    requires_resolution_summary: bool
+
+class AllowedTransitionsOut(BaseModel):
+    complaint_id: int
+    current_status: str
+    user_role: str
+    can_close: bool
+    allowed_transitions: List[StatusTransitionOption]
+
+class StatusConfigItem(BaseModel):
+    status: str
+    label: str
+    category: str
+    description: str
 
 class ComplaintOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -77,6 +118,7 @@ class ComplaintOut(BaseModel):
     priority: str
     sla_deadline_days: int
     sla_due_date: Optional[datetime] = None
+    received_date: Optional[datetime] = None
     days_open: int
     is_overdue: bool
     sla_status: str  # ON_TRACK, APPROACHING_DEADLINE, OVERDUE
@@ -93,9 +135,11 @@ class ComplaintOut(BaseModel):
 class ComplaintDetailOut(ComplaintOut):
     status_history: List[CaseStatusHistoryOut] = []
     assignment_history: List[CaseAssignmentHistoryOut] = []
+    timeline: List[TimelineEventOut] = []
 
 class ComplaintListResponse(BaseModel):
     total: int
     page: int
     page_size: int
     items: List[ComplaintOut]
+

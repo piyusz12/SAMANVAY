@@ -93,6 +93,21 @@ def get_current_user(
         )
     return user
 
+def get_optional_current_user(
+    request: Request,
+    db: Session = Depends(get_db),
+    header_token: Optional[str] = Depends(oauth2_scheme)
+) -> Optional[User]:
+    """
+    Optional authentication dependency: returns User if valid token is provided,
+    otherwise returns None without raising 401.
+    """
+    try:
+        return get_current_user(request=request, db=db, header_token=header_token)
+    except HTTPException:
+        return None
+
+
 def require_roles(allowed_roles: List[str]):
     """
     Role-based access control dependency.

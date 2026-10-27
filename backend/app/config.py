@@ -1,6 +1,6 @@
 import os
 from typing import List
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "SAMANVAY - AICTE Integrated Complaint Dashboard"
@@ -21,11 +21,43 @@ class Settings(BaseSettings):
     # Database: Supports PostgreSQL or local SQLite fallback
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./samanvay.db")
     
-    # CORS
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://127.0.0.1:5173", "*"]
+    # CORS: Explicit authorized origins (prevent wildcard with credentials)
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000"
+    ]
     
-    # Upload directory
+    # Upload & Evidence storage directories (outside publicly served roots)
     UPLOAD_DIR: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
+    EVIDENCE_STORAGE_DIR: str = os.getenv(
+        "EVIDENCE_STORAGE_DIR",
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "storage", "evidence")
+    )
+    EVIDENCE_QUARANTINE_DIR: str = os.getenv(
+        "EVIDENCE_QUARANTINE_DIR",
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "storage", "quarantine")
+    )
+    BACKUP_STORAGE_DIR: str = os.getenv(
+        "BACKUP_STORAGE_DIR",
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "storage", "backups")
+    )
+
+    # Document & attachment policies
+    MAX_ATTACHMENT_SIZE_BYTES: int = 15 * 1024 * 1024  # 15 MB
+    MAX_ATTACHMENTS_PER_CASE: int = 10
+    ALLOWED_DOCUMENT_EXTENSIONS: List[str] = [
+        ".pdf", ".docx", ".xlsx", ".csv", ".png", ".jpg", ".jpeg", ".txt"
+    ]
+    MALWARE_SCAN_ENABLED: bool = True
+    CLAMAV_HOST: str = os.getenv("CLAMAV_HOST", "")
+    CLAMAV_PORT: int = int(os.getenv("CLAMAV_PORT", "3310"))
+
+    # Reporting & Export limits
+    MAX_EXPORT_ROWS: int = 5000
     
     def validate_configuration(self):
         """Validates critical settings and emits actionable startup diagnostics."""
@@ -44,10 +76,11 @@ class Settings(BaseSettings):
                     UserWarning
                 )
 
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
-        extra = "ignore"
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_file=".env",
+        extra="ignore"
+    )
 
 settings = Settings()
 settings.validate_configuration()

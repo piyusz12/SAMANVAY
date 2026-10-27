@@ -1,6 +1,6 @@
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class TransferRequestSchema(BaseModel):
     to_bureau: str
@@ -28,5 +28,4 @@ class MovementOut(BaseModel):
     created_at: datetime
     decided_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

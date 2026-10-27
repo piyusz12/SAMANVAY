@@ -10,8 +10,12 @@ import AISimilarityView from './components/AISimilarityView';
 import TransfersView from './components/TransfersView';
 import LodgeComplaintView from './components/LodgeComplaintView';
 import AuditTrailView from './components/AuditTrailView';
+import CoordinationWorkspaceView from './components/CoordinationWorkspaceView';
 import ComplaintDetailModal from './components/ComplaintDetailModal';
 import HealthStatusModal from './components/HealthStatusModal';
+import UnifiedSearchView from './components/UnifiedSearchView';
+import DeadlinesAlertsView from './components/DeadlinesAlertsView';
+import ReportingCenterView from './components/ReportingCenterView';
 
 const DEMO_PERSONAS = [
   {
@@ -79,11 +83,32 @@ const DEMO_PERSONAS = [
   }
 ];
 
+const getInitialTab = () => {
+  if (typeof window !== 'undefined') {
+    const sp = new URLSearchParams(window.location.search);
+    const tabParam = sp.get('tab');
+    if (tabParam && ['overview', 'reports', 'search', 'deadlines', 'conflicts', 'coordination', 'cases', 'dossier', 'similarity', 'transfers', 'lodge', 'audit'].includes(tabParam)) {
+      return tabParam;
+    }
+  }
+  return 'overview';
+};
+
 export default function App() {
   const [theme, setTheme] = useState('dark');
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+  const [globalSearchInput, setGlobalSearchInput] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedPersonaEmail, setSelectedPersonaEmail] = useState('admin@samanvay.aicte.gov.in');
+
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      sp.set('tab', newTab);
+      window.history.pushState(null, '', `${window.location.pathname}?${sp.toString()}`);
+    }
+  };
 
   // Global State
   const [overview, setOverview] = useState(null);
@@ -246,6 +271,44 @@ export default function App() {
         </div>
 
         <div className="nav-actions">
+          {/* Global Quick Search Bar */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (globalSearchInput.trim()) {
+                handleTabChange('search');
+                const sp = new URLSearchParams(window.location.search);
+                sp.set('tab', 'search');
+                sp.set('q', globalSearchInput.trim());
+                window.history.pushState(null, '', `${window.location.pathname}?${sp.toString()}`);
+              }
+            }}
+            style={{ display: 'flex', alignItems: 'center' }}
+          >
+            <div style={{ position: 'relative', width: '250px' }}>
+              <input
+                id="header-global-search-input"
+                type="text"
+                className="form-input"
+                style={{
+                  height: '34px',
+                  fontSize: '12.5px',
+                  paddingLeft: '30px',
+                  paddingRight: '10px',
+                  borderRadius: '20px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid var(--border-color)'
+                }}
+                placeholder="Search cases, AICTE IDs..."
+                value={globalSearchInput}
+                onChange={(e) => setGlobalSearchInput(e.target.value)}
+              />
+              <span style={{ position: 'absolute', left: '10px', top: '8px', fontSize: '13px', color: 'var(--text-muted)' }}>
+                🔍
+              </span>
+            </div>
+          </form>
+
           {/* Persona Switcher */}
           <div className="persona-selector">
             <span>👤</span>
@@ -350,6 +413,29 @@ export default function App() {
               ))
             )}
           </div>
+
+          <div style={{ padding: '10px 16px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--card-bg)' }}>
+            <button
+              className="btn-secondary"
+              style={{ padding: '4px 10px', fontSize: '11.5px' }}
+              onClick={async () => {
+                await api.markAllNotificationsRead();
+                setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+              }}
+            >
+              Mark All Read
+            </button>
+            <button
+              className="btn-primary"
+              style={{ padding: '4px 12px', fontSize: '11.5px' }}
+              onClick={() => {
+                setShowNotificationDrawer(false);
+                handleTabChange('deadlines');
+              }}
+            >
+              Open Alert Center →
+            </button>
+          </div>
         </div>
       )}
 
@@ -358,15 +444,42 @@ export default function App() {
         <button
           id="tab-overview"
           className={`nav-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
+          onClick={() => handleTabChange('overview')}
         >
           📊 Executive Overview
         </button>
 
         <button
+          id="tab-search"
+          className={`nav-tab-btn ${activeTab === 'search' ? 'active' : ''}`}
+          onClick={() => handleTabChange('search')}
+        >
+          🔍 Unified Search
+        </button>
+
+        <button
+          id="tab-reports"
+          className={`nav-tab-btn ${activeTab === 'reports' ? 'active' : ''}`}
+          onClick={() => handleTabChange('reports')}
+        >
+          📈 Reports & Exports
+        </button>
+
+        <button
+          id="tab-deadlines"
+          className={`nav-tab-btn ${activeTab === 'deadlines' ? 'active' : ''}`}
+          onClick={() => handleTabChange('deadlines')}
+        >
+          ⏱️ Deadlines & Alerts
+          {unreadNotificationsCount > 0 && (
+            <span className="tab-badge" style={{ backgroundColor: '#ef4444' }}>{unreadNotificationsCount}</span>
+          )}
+        </button>
+
+        <button
           id="tab-conflicts"
           className={`nav-tab-btn ${activeTab === 'conflicts' ? 'active' : ''}`}
-          onClick={() => setActiveTab('conflicts')}
+          onClick={() => handleTabChange('conflicts')}
         >
           🚨 Conflict Radar
           {conflicts.length > 0 && (
@@ -375,9 +488,17 @@ export default function App() {
         </button>
 
         <button
+          id="tab-coordination"
+          className={`nav-tab-btn ${activeTab === 'coordination' ? 'active' : ''}`}
+          onClick={() => handleTabChange('coordination')}
+        >
+          🤝 Case Coordination
+        </button>
+
+        <button
           id="tab-cases"
           className={`nav-tab-btn ${activeTab === 'cases' ? 'active' : ''}`}
-          onClick={() => setActiveTab('cases')}
+          onClick={() => handleTabChange('cases')}
         >
           📁 Complaints Repository
         </button>
@@ -385,7 +506,7 @@ export default function App() {
         <button
           id="tab-dossier"
           className={`nav-tab-btn ${activeTab === 'dossier' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dossier')}
+          onClick={() => handleTabChange('dossier')}
         >
           🏢 Institution 360° Dossier
         </button>
@@ -393,7 +514,7 @@ export default function App() {
         <button
           id="tab-similarity"
           className={`nav-tab-btn ${activeTab === 'similarity' ? 'active' : ''}`}
-          onClick={() => setActiveTab('similarity')}
+          onClick={() => handleTabChange('similarity')}
         >
           🤖 AI Similarity & Deduplication
         </button>
@@ -401,7 +522,7 @@ export default function App() {
         <button
           id="tab-transfers"
           className={`nav-tab-btn ${activeTab === 'transfers' ? 'active' : ''}`}
-          onClick={() => setActiveTab('transfers')}
+          onClick={() => handleTabChange('transfers')}
         >
           🔄 Inter-Bureau Transfers
         </button>
@@ -409,7 +530,7 @@ export default function App() {
         <button
           id="tab-lodge"
           className={`nav-tab-btn ${activeTab === 'lodge' ? 'active' : ''}`}
-          onClick={() => setActiveTab('lodge')}
+          onClick={() => handleTabChange('lodge')}
         >
           ➕ Lodge New Complaint
         </button>
@@ -417,7 +538,7 @@ export default function App() {
         <button
           id="tab-audit"
           className={`nav-tab-btn ${activeTab === 'audit' ? 'active' : ''}`}
-          onClick={() => setActiveTab('audit')}
+          onClick={() => handleTabChange('audit')}
         >
           📜 Audit Trail Log
         </button>
@@ -429,9 +550,35 @@ export default function App() {
           <ExecutiveOverview
             overview={overview}
             loading={loadingOverview}
-            onSelectTab={setActiveTab}
+            currentUser={currentUser}
+            onSelectTab={handleTabChange}
             onSelectInstitution={handleSelectInstitution}
             onSelectComplaint={setSelectedComplaintId}
+            onRefresh={refreshDashboardData}
+          />
+        )}
+
+        {activeTab === 'search' && (
+          <UnifiedSearchView
+            currentUser={currentUser}
+            onSelectComplaint={setSelectedComplaintId}
+            onSelectInstitution={handleSelectInstitution}
+            initialQuery={globalSearchInput}
+          />
+        )}
+
+        {activeTab === 'reports' && (
+          <ReportingCenterView
+            currentUser={currentUser}
+          />
+        )}
+
+        {activeTab === 'deadlines' && (
+          <DeadlinesAlertsView
+            currentUser={currentUser}
+            onSelectComplaint={setSelectedComplaintId}
+            onSelectInstitution={handleSelectInstitution}
+            onRefreshGlobal={refreshDashboardData}
           />
         )}
 
@@ -489,6 +636,14 @@ export default function App() {
               setSelectedComplaintId(newCase.id);
             }}
             currentUser={currentUser}
+          />
+        )}
+
+        {activeTab === 'coordination' && (
+          <CoordinationWorkspaceView
+            currentUser={currentUser}
+            onSelectComplaint={setSelectedComplaintId}
+            onSelectInstitution={handleSelectInstitution}
           />
         )}
 

@@ -26,7 +26,21 @@ from backend.app.services.complaint_service import calculate_sla_details
 from backend.app.services.audit_service import log_audit_event
 from backend.app.core.datetime_util import utc_now
 
-OPEN_STATUSES = ["LODGED", "UNDER_INQUIRY", "SHOW_CAUSE_NOTICE", "EXPLANATION_CALLED", "ESCALATED"]
+OPEN_STATUSES = [
+    "RECEIVED",
+    "LODGED",
+    "UNDER_REVIEW",
+    "SCRUTINY_PENDING",
+    "IN_PROGRESS",
+    "UNDER_INQUIRY",
+    "AWAITING_INFORMATION",
+    "SHOW_CAUSE_NOTICE",
+    "SHOW_CAUSE_ISSUED",
+    "HEARING_SCHEDULED",
+    "EXPLANATION_CALLED",
+    "TRANSFERRED",
+    "ESCALATED"
+]
 TERMINAL_STATUSES = ["RESOLVED", "DISPOSED"]
 
 def create_institution(

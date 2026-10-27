@@ -36,8 +36,31 @@ export default function CasesRepositoryView({
     'HEARING_SCHEDULED',
     'RESOLVED',
     'DISPOSED',
-    'TRANSFERRED'
+    'TRANSFERRED',
+    'ESCALATED',
+    'AWAITING_INFORMATION'
   ];
+
+  const priorities = [
+    'ALL',
+    'CRITICAL',
+    'HIGH',
+    'MEDIUM',
+    'LOW'
+  ];
+
+  const sortOptions = [
+    { value: 'created_at', label: 'Lodged Date' },
+    { value: 'priority', label: 'Priority' },
+    { value: 'sla_due_date', label: 'SLA Target Due Date' },
+    { value: 'status', label: 'Status' }
+  ];
+
+  const currentPage = filters.page || 1;
+  const pageSize = filters.page_size || 20;
+  const totalPages = Math.ceil(total / pageSize) || 1;
+  const startRecord = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endRecord = Math.min(currentPage * pageSize, total);
 
   return (
     <div>
@@ -69,13 +92,23 @@ export default function CasesRepositoryView({
             Search Repository
           </button>
 
-          {(filters.search || filters.bureau !== 'ALL' || filters.status !== 'ALL' || filters.is_overdue) && (
+          {(filters.search || filters.bureau !== 'ALL' || filters.status !== 'ALL' || filters.priority !== 'ALL' || filters.is_overdue || filters.sort_by) && (
             <button
               type="button"
               className="btn-secondary"
               onClick={() => {
                 setSearchTerm('');
-                onFilterChange({ bureau: 'ALL', status: 'ALL', search: '', priority: 'ALL', is_overdue: false, page: 1 });
+                onFilterChange({
+                  bureau: 'ALL',
+                  status: 'ALL',
+                  priority: 'ALL',
+                  search: '',
+                  sort_by: 'created_at',
+                  sort_dir: 'desc',
+                  is_overdue: false,
+                  page: 1,
+                  page_size: pageSize
+                });
               }}
             >
               Reset Filters
@@ -112,9 +145,50 @@ export default function CasesRepositoryView({
               onChange={(e) => onFilterChange({ ...filters, status: e.target.value, page: 1 })}
             >
               {statuses.map((s) => (
-                <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
               ))}
             </select>
+          </div>
+
+          {/* Priority Dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>Priority:</span>
+            <select
+              id="priority-filter-select"
+              className="form-select"
+              style={{ width: 'auto', padding: '5px 10px', fontSize: '12.5px' }}
+              value={filters.priority || 'ALL'}
+              onChange={(e) => onFilterChange({ ...filters, priority: e.target.value, page: 1 })}
+            >
+              {priorities.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sort By Dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>Sort:</span>
+            <select
+              id="sort-by-select"
+              className="form-select"
+              style={{ width: 'auto', padding: '5px 10px', fontSize: '12.5px' }}
+              value={filters.sort_by || 'created_at'}
+              onChange={(e) => onFilterChange({ ...filters, sort_by: e.target.value, page: 1 })}
+            >
+              {sortOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="btn-secondary"
+              style={{ padding: '4px 8px', fontSize: '11px' }}
+              title="Toggle Sort Direction"
+              onClick={() => onFilterChange({ ...filters, sort_dir: (filters.sort_dir === 'asc' ? 'desc' : 'asc'), page: 1 })}
+            >
+              {filters.sort_dir === 'asc' ? '▲ ASC' : '▼ DESC'}
+            </button>
           </div>
 
           {/* Overdue SLA Toggle */}
@@ -126,7 +200,7 @@ export default function CasesRepositoryView({
               onChange={(e) => onFilterChange({ ...filters, is_overdue: e.target.checked || undefined, page: 1 })}
             />
             <span style={{ color: filters.is_overdue ? '#f87171' : 'var(--text-secondary)', fontWeight: '600' }}>
-              ⚠️ Show Overdue SLA Only
+              ⚠️ Overdue SLA Only
             </span>
           </label>
         </div>
@@ -150,13 +224,14 @@ export default function CasesRepositoryView({
             <table className="data-table" id="complaints-data-table">
               <thead>
                 <tr>
-                  <th>Tracking Number</th>
+                  <th>Case Reference</th>
                   <th>Institution / Permanent ID</th>
                   <th>Bureau</th>
                   <th>Subject & Category</th>
                   <th>Priority</th>
-                  <th>SLA Status</th>
-                  <th>Case Status</th>
+                  <th>SLA Track</th>
+                  <th>Current Owner</th>
+                  <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -164,10 +239,10 @@ export default function CasesRepositoryView({
                 {complaints.map((c) => (
                   <tr key={c.id}>
                     <td>
-                      <span className="font-mono" style={{ fontWeight: '700', color: 'var(--accent-blue)', fontSize: '12.5px' }}>
+                      <span className="font-mono" style={{ fontWeight: '700', color: 'var(--accent-blue)', fontSize: '12px' }}>
                         {c.complaint_no}
                       </span>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>
                         {new Date(c.created_at).toLocaleDateString()}
                       </div>
                     </td>
@@ -180,23 +255,23 @@ export default function CasesRepositoryView({
                       >
                         {c.institution_name}
                       </div>
-                      <div className="font-mono" style={{ fontSize: '11.5px', color: 'var(--accent-gold)' }}>
+                      <div className="font-mono" style={{ fontSize: '11px', color: 'var(--accent-gold)' }}>
                         {c.institution_aicte_id}
                       </div>
                     </td>
 
                     <td>
-                      <span className="badge badge-blue font-mono" style={{ fontSize: '11px' }}>
+                      <span className="badge badge-blue font-mono" style={{ fontSize: '10.5px' }}>
                         {c.bureau.replace('_', ' ').replace('BUREAU', '').replace('CELL', '')}
                       </span>
                     </td>
 
-                    <td style={{ maxWidth: '320px' }}>
+                    <td style={{ maxWidth: '300px' }}>
                       <div style={{ fontWeight: '600', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {c.subject}
                       </div>
-                      <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', display: 'flex', gap: '8px' }}>
-                        <span>Category: <strong>{c.category.replace('_', ' ')}</strong></span>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        Category: <strong>{c.category.replace(/_/g, ' ')}</strong>
                       </div>
                     </td>
 
@@ -209,6 +284,7 @@ export default function CasesRepositoryView({
                             ? 'badge-warning'
                             : 'badge-neutral'
                         }`}
+                        style={{ fontSize: '11px' }}
                       >
                         {c.priority}
                       </span>
@@ -216,27 +292,33 @@ export default function CasesRepositoryView({
 
                     <td>
                       {c.sla_status === 'OVERDUE' ? (
-                        <span className="badge badge-danger">
+                        <span className="badge badge-danger" style={{ fontSize: '11px' }}>
                           🚨 Overdue ({c.days_open}d / {c.sla_deadline_days}d)
                         </span>
                       ) : c.sla_status === 'APPROACHING_DEADLINE' ? (
-                        <span className="badge badge-warning">
+                        <span className="badge badge-warning" style={{ fontSize: '11px' }}>
                           ⏳ Warning ({c.days_open}d / {c.sla_deadline_days}d)
                         </span>
                       ) : c.sla_status === 'RESOLVED' ? (
-                        <span className="badge badge-success">
+                        <span className="badge badge-success" style={{ fontSize: '11px' }}>
                           ✅ Closed ({c.days_open}d)
                         </span>
                       ) : (
-                        <span className="badge badge-success">
+                        <span className="badge badge-success" style={{ fontSize: '11px' }}>
                           🟢 On Track ({c.days_open}d / {c.sla_deadline_days}d)
                         </span>
                       )}
                     </td>
 
                     <td>
-                      <span className="badge badge-neutral font-mono" style={{ fontSize: '11px' }}>
-                        {c.status.replace('_', ' ')}
+                      <span style={{ fontSize: '12px', color: c.assigned_officer_name ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: c.assigned_officer_name ? '600' : '400' }}>
+                        {c.assigned_officer_name || 'Unassigned'}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span className="badge badge-neutral font-mono" style={{ fontSize: '10.5px' }}>
+                        {c.status.replace(/_/g, ' ')}
                       </span>
                     </td>
 
@@ -244,7 +326,7 @@ export default function CasesRepositoryView({
                       <button
                         id={`btn-open-case-${c.id}`}
                         className="btn-primary"
-                        style={{ padding: '5px 12px', fontSize: '12px' }}
+                        style={{ padding: '4px 10px', fontSize: '11.5px' }}
                         onClick={() => onSelectComplaint(c.id)}
                       >
                         Inspect Case →
@@ -256,6 +338,63 @@ export default function CasesRepositoryView({
             </table>
           </div>
         )}
+
+        {/* Server-Side Pagination Bar */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '12px 18px',
+            borderTop: '1px solid var(--border-subtle)',
+            background: 'var(--bg-subtle)',
+            flexWrap: 'wrap',
+            gap: '12px',
+            fontSize: '12.5px'
+          }}
+        >
+          <div style={{ color: 'var(--text-secondary)' }}>
+            Showing <strong>{startRecord}</strong> to <strong>{endRecord}</strong> of <strong>{total}</strong> cases
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ color: 'var(--text-muted)' }}>Page Size:</span>
+            <select
+              className="form-select"
+              style={{ width: 'auto', padding: '3px 8px', fontSize: '12px' }}
+              value={pageSize}
+              onChange={(e) => onFilterChange({ ...filters, page_size: Number(e.target.value), page: 1 })}
+            >
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+
+            <button
+              id="pagination-prev-btn"
+              className="btn-secondary"
+              style={{ padding: '4px 10px', fontSize: '12px' }}
+              disabled={currentPage <= 1 || loading}
+              onClick={() => onFilterChange({ ...filters, page: currentPage - 1 })}
+            >
+              ‹ Previous
+            </button>
+
+            <span style={{ fontWeight: '700', padding: '0 6px' }}>
+              Page {currentPage} of {totalPages}
+            </span>
+
+            <button
+              id="pagination-next-btn"
+              className="btn-secondary"
+              style={{ padding: '4px 10px', fontSize: '12px' }}
+              disabled={currentPage >= totalPages || loading}
+              onClick={() => onFilterChange({ ...filters, page: currentPage + 1 })}
+            >
+              Next ›
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

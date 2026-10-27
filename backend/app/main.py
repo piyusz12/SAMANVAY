@@ -29,6 +29,12 @@ from backend.app.api.movements import router as movements_router
 from backend.app.api.analytics import router as analytics_router
 from backend.app.api.audit import router as audit_router
 from backend.app.api.admin import router as admin_router
+from backend.app.api.coordination import router as coordination_router
+from backend.app.api.search import router as search_router
+from backend.app.api.notifications import router as notifications_router
+from backend.app.api.alerts import router as alerts_router
+from backend.app.api.evidence import router as evidence_router
+from backend.app.api.reports import router as reports_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -97,3 +103,9 @@ app.include_router(movements_router, prefix=settings.API_V1_STR)
 app.include_router(analytics_router, prefix=settings.API_V1_STR)
 app.include_router(audit_router, prefix=settings.API_V1_STR)
 app.include_router(admin_router, prefix=settings.API_V1_STR)
+app.include_router(coordination_router, prefix=settings.API_V1_STR)
+app.include_router(search_router, prefix=settings.API_V1_STR)
+app.include_router(notifications_router, prefix=settings.API_V1_STR)
+app.include_router(alerts_router, prefix=settings.API_V1_STR)
+app.include_router(evidence_router, prefix=settings.API_V1_STR)
+app.include_router(reports_router, prefix=settings.API_V1_STR)

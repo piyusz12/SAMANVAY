@@ -23,6 +23,10 @@ class AuditLog(Base):
     request_id = Column(String(64), nullable=True, index=True)
     
     timestamp = Column(DateTime, default=utc_now, nullable=False, index=True)
+    
+    # Cryptographic Tamper-Detection & Hash Chaining (Phase 14)
+    prev_hash = Column(String(64), nullable=True)
+    entry_hash = Column(String(64), nullable=True, index=True)
 
     complaint = relationship("Complaint", back_populates="audit_logs")
     actor = relationship("User", foreign_keys=[actor_id])

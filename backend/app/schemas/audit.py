@@ -18,6 +18,8 @@ class AuditLogOut(BaseModel):
     ip_address: Optional[str] = None
     request_id: Optional[str] = None
     timestamp: datetime
+    prev_hash: Optional[str] = None
+    entry_hash: Optional[str] = None
 
 class NotificationDeliveryAttemptOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)

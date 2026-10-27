@@ -7,20 +7,33 @@ export default function LodgeComplaintView({
 }) {
   const [institutions, setInstitutions] = useState([]);
   const [institutionId, setInstitutionId] = useState('');
-  const [bureau, setBureau] = useState(currentUser?.bureau !== 'CENTRAL_ADMIN' ? currentUser?.bureau || 'PGRC' : 'PGRC');
+  const [bureau, setBureau] = useState(
+    currentUser?.bureau && currentUser?.bureau !== 'CENTRAL_ADMIN'
+      ? currentUser.bureau
+      : 'PGRC'
+  );
   const [complainantName, setComplainantName] = useState('');
   const [complainantCategory, setComplainantCategory] = useState('STUDENT');
   const [complainantEmail, setComplainantEmail] = useState('');
   const [category, setCategory] = useState('FEE_EXTORTION');
   const [priority, setPriority] = useState('MEDIUM');
+  const [receivedDate, setReceivedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [slaDays, setSlaDays] = useState(30);
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [internalNotes, setInternalNotes] = useState('');
+
+  // Officer Assignment & Permitted Attachments
+  const [officers, setOfficers] = useState([]);
+  const [assignedOfficerId, setAssignedOfficerId] = useState('');
+  const [attachment, setAttachment] = useState(null);
+  const [attachmentError, setAttachmentError] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [preCheckMatches, setPreCheckMatches] = useState([]);
   const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
 
+  // Load registered institutions
   useEffect(() => {
     api.getInstitutions()
       .then((data) => {
@@ -29,6 +42,17 @@ export default function LodgeComplaintView({
       })
       .catch((err) => console.error(err));
   }, []);
+
+  // Load eligible officers whenever bureau changes
+  useEffect(() => {
+    if (bureau) {
+      api.getBureauOfficers(bureau)
+        .then((data) => {
+          setOfficers(data || []);
+        })
+        .catch(() => setOfficers([]));
+    }
+  }, [bureau]);
 
   // Run duplicate pre-check debounce when subject & description are typed
   useEffect(() => {
@@ -57,16 +81,43 @@ export default function LodgeComplaintView({
     return () => clearTimeout(timer);
   }, [institutionId, subject, description, category]);
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setAttachmentError('');
+    if (!file) {
+      setAttachment(null);
+      return;
+    }
+
+    const allowedExtensions = ['.pdf', '.docx', '.xlsx', '.csv', '.png', '.jpg', '.jpeg', '.txt'];
+    const fileName = file.name.toLowerCase();
+    const isAllowed = allowedExtensions.some(ext => fileName.endsWith(ext));
+
+    if (!isAllowed) {
+      setAttachmentError('Permitted file types: PDF, DOCX, XLSX, CSV, PNG, JPG, TXT.');
+      setAttachment(null);
+      return;
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+      setAttachmentError('File size exceeds the 15 MB maximum limit.');
+      setAttachment(null);
+      return;
+    }
+
+    setAttachment(file);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!institutionId || !subject || !description) {
-      alert('Please fill all mandatory fields.');
+      alert('Please fill all mandatory fields (Institution, Subject Title, and Narrative Description).');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const newCase = await api.createComplaint({
+      const payload = {
         institution_id: Number(institutionId),
         bureau,
         complainant_name: complainantName || 'Anonymous Complainant',
@@ -76,15 +127,30 @@ export default function LodgeComplaintView({
         description,
         category,
         priority,
-        sla_deadline_days: 30,
+        received_date: receivedDate ? new Date(receivedDate).toISOString() : new Date().toISOString(),
+        sla_deadline_days: Number(slaDays) || 30,
+        assigned_officer_id: assignedOfficerId ? Number(assignedOfficerId) : null,
         internal_notes: internalNotes || null
-      });
+      };
 
-      alert(`Grievance successfully lodged with Tracking ID: ${newCase.complaint_no}`);
+      const newCase = await api.createComplaint(payload);
+
+      // Upload attachment if provided
+      if (attachment && newCase?.id) {
+        try {
+          await api.uploadEvidence(newCase.id, attachment);
+        } catch (uploadErr) {
+          console.warn('Evidence upload failed:', uploadErr);
+        }
+      }
+
+      alert(`Grievance successfully registered with Unique Case Reference: ${newCase.complaint_no}`);
+      
       // Reset form
       setSubject('');
       setDescription('');
       setInternalNotes('');
+      setAttachment(null);
       setPreCheckMatches([]);
       if (onComplaintCreated) onComplaintCreated(newCase);
     } catch (err) {
@@ -95,11 +161,11 @@ export default function LodgeComplaintView({
   };
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '920px', margin: '0 auto' }}>
       <div style={{ marginBottom: '24px' }}>
         <h2 style={{ fontSize: '22px', fontWeight: '800' }}>Lodge Institution Complaint & Intake Scrutiny</h2>
         <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)' }}>
-          Register incoming technical education grievance with automated pre-submission duplicate detection and multi-bureau collision check.
+          Register incoming technical education grievance with automated unique case numbering, multi-bureau collision detection, and initial assignment.
         </p>
       </div>
 
@@ -121,7 +187,7 @@ export default function LodgeComplaintView({
             </h4>
           </div>
           <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', marginBottom: '10px' }}>
-            Existing complaints already on file for this institution appear semantically similar. Review to avoid opening duplicate parallel inquiries:
+            Existing complaints on file for this institution appear semantically similar. Review before lodging to avoid parallel inquiries:
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {preCheckMatches.map((m) => (
@@ -171,9 +237,9 @@ export default function LodgeComplaintView({
           </div>
 
           {/* Bureau & Grievance Category */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
             <div className="form-group">
-              <label className="form-label">AICTE Bureau / Intake Cell *</label>
+              <label className="form-label">Originating AICTE Bureau / Intake Cell *</label>
               <select
                 id="intake-bureau-select"
                 className="form-select"
@@ -211,6 +277,50 @@ export default function LodgeComplaintView({
             </div>
           </div>
 
+          {/* Dates & SLA */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+            <div className="form-group">
+              <label className="form-label">Grievance Received Date *</label>
+              <input
+                id="intake-received-date"
+                type="date"
+                className="form-input"
+                value={receivedDate}
+                onChange={(e) => setReceivedDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">SLA Target Resolution (Days) *</label>
+              <input
+                id="intake-sla-days"
+                type="number"
+                min="1"
+                max="180"
+                className="form-input"
+                value={slaDays}
+                onChange={(e) => setSlaDays(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Priority Level *</label>
+              <select
+                id="intake-priority-select"
+                className="form-select"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+              >
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="CRITICAL">CRITICAL (Immediate Council Attention)</option>
+              </select>
+            </div>
+          </div>
+
           {/* Complainant Particulars */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
             <div className="form-group">
@@ -219,7 +329,7 @@ export default function LodgeComplaintView({
                 id="intake-complainant-name"
                 type="text"
                 className="form-input"
-                placeholder="e.g. Rahul Sharma"
+                placeholder="e.g. Dr. Rajesh Kumar"
                 value={complainantName}
                 onChange={(e) => setComplainantName(e.target.value)}
               />
@@ -243,19 +353,37 @@ export default function LodgeComplaintView({
             </div>
 
             <div className="form-group">
-              <label className="form-label">Priority Level</label>
-              <select
-                id="intake-priority-select"
-                className="form-select"
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-              >
-                <option value="LOW">LOW</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HIGH">HIGH</option>
-                <option value="CRITICAL">CRITICAL (Urgent Council Scrutiny)</option>
-              </select>
+              <label className="form-label">Complainant Email (Confidential)</label>
+              <input
+                id="intake-complainant-email"
+                type="email"
+                className="form-input"
+                placeholder="complainant@example.com"
+                value={complainantEmail}
+                onChange={(e) => setComplainantEmail(e.target.value)}
+              />
             </div>
+          </div>
+
+          {/* Officer Assignment */}
+          <div className="form-group">
+            <label className="form-label">Initial Responsible Desk Officer (Optional)</label>
+            <select
+              id="intake-officer-select"
+              className="form-select"
+              value={assignedOfficerId}
+              onChange={(e) => setAssignedOfficerId(e.target.value)}
+            >
+              <option value="">-- Leave Unassigned (Intake Queue) --</option>
+              {officers.map((off) => (
+                <option key={off.id} value={off.id}>
+                  {off.full_name} ({off.designation || off.role}) — {off.bureau}
+                </option>
+              ))}
+            </select>
+            <small style={{ color: 'var(--text-muted)', fontSize: '11.5px', marginTop: '4px', display: 'block' }}>
+              Only active officers authorized for {bureau.replace('_', ' ')} are shown. Bureau Administrators can assign or reassign cases at any stage.
+            </small>
           </div>
 
           {/* Subject */}
@@ -286,6 +414,28 @@ export default function LodgeComplaintView({
             ></textarea>
           </div>
 
+          {/* Permitted Attachments */}
+          <div className="form-group">
+            <label className="form-label">Supporting Evidence / Permitted Attachments (PDF, DOCX, XLSX, CSV, PNG, JPG, TXT max 15MB)</label>
+            <input
+              id="intake-attachment-input"
+              type="file"
+              className="form-input"
+              accept=".pdf,.docx,.xlsx,.csv,.png,.jpg,.jpeg,.txt"
+              onChange={handleFileChange}
+            />
+            {attachment && (
+              <div style={{ marginTop: '6px', fontSize: '12px', color: 'var(--accent-blue)' }}>
+                Selected: <strong>{attachment.name}</strong> ({(attachment.size / 1024).toFixed(1)} KB)
+              </div>
+            )}
+            {attachmentError && (
+              <div style={{ marginTop: '6px', fontSize: '12px', color: 'var(--status-danger)' }}>
+                ⚠️ {attachmentError}
+              </div>
+            )}
+          </div>
+
           {/* Internal Scrutiny Notes */}
           <div className="form-group">
             <label className="form-label">Internal Scrutiny Notes (Confidential)</label>
@@ -306,7 +456,7 @@ export default function LodgeComplaintView({
               className="btn-primary"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Registering...' : 'Lodge Complaint & Initiate Tracking'}
+              {isSubmitting ? 'Registering Grievance...' : 'Lodge Complaint & Initiate Tracking'}
             </button>
           </div>
         </form>

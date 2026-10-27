@@ -7,7 +7,9 @@ class FollowUpTask(Base):
     __tablename__ = "follow_up_tasks"
 
     id = Column(Integer, primary_key=True, index=True)
-    complaint_id = Column(Integer, ForeignKey("complaints.id", ondelete="CASCADE"), nullable=False, index=True)
+    complaint_id = Column(Integer, ForeignKey("complaints.id", ondelete="CASCADE"), nullable=True, index=True)
+    linkage_id = Column(Integer, ForeignKey("case_linkages.id", ondelete="CASCADE"), nullable=True, index=True)
+    target_bureau = Column(String(64), nullable=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     assigned_to_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
@@ -23,5 +25,6 @@ class FollowUpTask(Base):
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     complaint = relationship("Complaint", back_populates="follow_up_tasks")
+    linkage = relationship("CaseLinkage", back_populates="follow_up_tasks")
     assigned_to = relationship("User", foreign_keys=[assigned_to_id])
     created_by = relationship("User", foreign_keys=[created_by_id])

@@ -1,27 +1,15 @@
-import re
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 from backend.app.models.complaint import Complaint
 from backend.app.models.institution import Institution
-
-STOPWORDS = {
-    "the", "is", "at", "which", "on", "and", "a", "an", "in", "to", "of", "for", "with",
-    "by", "from", "up", "about", "into", "through", "after", "before", "this", "that",
-    "these", "those", "i", "we", "he", "she", "they", "it", "our", "their", "has", "have",
-    "had", "be", "been", "was", "were", "are", "do", "does", "did", "as", "or", "not"
-}
-
-def extract_keywords(text: str, max_words: int = 5) -> List[str]:
-    tokens = re.findall(r'[a-zA-Z]{3,}', text.lower())
-    filtered = [t for t in tokens if t not in STOPWORDS]
-    # Count frequency
-    counts = {}
-    for t in filtered:
-        counts[t] = counts.get(t, 0) + 1
-    sorted_words = sorted(counts.items(), key=lambda x: x[1], reverse=True)
-    return [word for word, _ in sorted_words[:max_words]]
+from backend.app.models.user import User
+from backend.app.core.datetime_util import utc_now
+from backend.app.services.overlap_engine import (
+    run_staged_overlap_evaluation,
+    check_linkage_status_and_reevaluation,
+    compute_text_hash,
+    DEFAULT_THRESHOLDS
+)
 
 def calculate_explainable_similarity(
     db: Session,
@@ -30,89 +18,101 @@ def calculate_explainable_similarity(
     institution_id: int,
     category: str,
     exclude_complaint_id: Optional[int] = None,
-    threshold: float = 0.35
+    bureau: Optional[str] = None,
+    threshold: Optional[float] = None,
+    current_user: Optional[User] = None
 ) -> Dict[str, Any]:
     """
-    Computes explainable similarity between a query complaint and existing complaints in the repository.
+    Computes explainable 4-stage overlap detection for a query complaint against all repository records.
     Strictly follows AICTE human-in-the-loop governance: outputs explainable scoring breakdown,
-    shared features and rationale without performing any automated merge or decision.
+    confidence tiers, and human-readable reasons without performing any automated merge or decision.
     """
-    query = db.query(Complaint)
+    query = db.query(Complaint).filter(Complaint.is_deleted == False)
     if exclude_complaint_id:
         query = query.filter(Complaint.id != exclude_complaint_id)
-    
+
     candidates = query.all()
     if not candidates:
         return {
             "matches": [],
             "highest_score": 0.0,
             "duplicate_suspected": False,
-            "cross_bureau_overlap_suspected": False
+            "cross_bureau_overlap_suspected": False,
+            "total_evaluated_candidates": 0
         }
 
-    input_text = f"{subject} {description}".strip()
-    input_keywords = set(extract_keywords(input_text, max_words=10))
+    source_inst = db.query(Institution).filter(
+        Institution.id == institution_id,
+        Institution.is_deleted == False
+    ).first()
 
-    candidate_texts = [f"{c.subject} {c.description}".strip() for c in candidates]
-    all_corpus = [input_text] + candidate_texts
+    # Synthetic complaint representation for evaluation
+    source_complaint = Complaint(
+        id=exclude_complaint_id or 0,
+        complaint_no="QUERY_CASE",
+        institution_id=institution_id,
+        bureau=bureau or "PGRC",
+        category=category,
+        subject=subject,
+        description=description,
+        created_at=utc_now()
+    )
 
-    # TF-IDF Cosine Similarity
-    try:
-        vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
-        tfidf_matrix = vectorizer.fit_transform(all_corpus)
-        cosine_scores = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:])[0]
-    except Exception:
-        cosine_scores = [0.0] * len(candidates)
+    src_hash = compute_text_hash(f"{subject} {description}")
+    effective_thresh = DEFAULT_THRESHOLDS.copy()
+    if threshold is not None:
+        effective_thresh["low"] = threshold
 
     matches = []
     highest_score = 0.0
     duplicate_suspected = False
     cross_bureau_overlap_suspected = False
 
-    for idx, candidate in enumerate(candidates):
-        text_sim = float(cosine_scores[idx])
-        category_match = (candidate.category.lower() == category.lower())
-        institution_match = (candidate.institution_id == institution_id)
+    for candidate in candidates:
+        target_inst = candidate.institution
+        eval_result = run_staged_overlap_evaluation(
+            source=source_complaint,
+            target=candidate,
+            source_inst=source_inst,
+            target_inst=target_inst,
+            thresholds=effective_thresh
+        )
 
-        # Weighted Explainable Formula
-        # Text similarity: 55% weight
-        # Institution identity match: 30% weight
-        # Category match: 15% weight
-        composite_score = (text_sim * 0.55) + (0.30 if institution_match else 0.0) + (0.15 if category_match else 0.0)
-        composite_score = round(min(max(composite_score, 0.0), 1.0), 3)
+        score = eval_result["candidate_score"]
+        confidence = eval_result["confidence"]
+        reasons = eval_result["reasons"]
+        breakdown = eval_result["breakdown"]
 
-        if composite_score >= threshold:
-            candidate_keywords = set(extract_keywords(candidate_texts[idx], max_words=10))
-            shared_keywords = list(input_keywords.intersection(candidate_keywords))
+        # Check existing linkage or re-evaluation requirement
+        tgt_hash = compute_text_hash(f"{candidate.subject} {candidate.description}")
+        linkage, requires_reeval, linkage_status = check_linkage_status_and_reevaluation(
+            db=db,
+            source_id=source_complaint.id,
+            target_id=candidate.id,
+            source_hash=src_hash,
+            target_hash=tgt_hash
+        )
 
-            # Build explainable natural language rationale
-            reasons = []
-            if institution_match:
-                reasons.append("Identical institution")
-            else:
-                reasons.append("Different institution")
+        # Apply threshold filter
+        if score >= effective_thresh.get("low", 0.35):
+            inst_name = target_inst.name if target_inst else "Unknown Institution"
 
-            if category_match:
-                reasons.append(f"Matching category '{category}'")
+            if score > highest_score:
+                highest_score = score
 
-            reasons.append(f"{int(text_sim * 100)}% semantic narrative similarity")
-
-            if shared_keywords:
-                reasons.append(f"Shared salient keywords: [{', '.join(shared_keywords[:4])}]")
-
-            rationale = " | ".join(reasons)
-
-            inst = candidate.institution
-            inst_name = inst.name if inst else "Unknown Institution"
-
-            if composite_score > highest_score:
-                highest_score = composite_score
-
-            if composite_score >= 0.70 and institution_match:
+            if score >= 0.75 and breakdown["stage1_exact_identifier_matched"]:
                 duplicate_suspected = True
 
-            if institution_match and candidate.status not in ["DISPOSED", "RESOLVED"]:
+            if breakdown["stage3_cross_bureau"] and candidate.status not in ["DISPOSED", "RESOLVED"]:
                 cross_bureau_overlap_suspected = True
+
+            rationale_text = " | ".join(reasons) if reasons else "Composite semantic correspondence."
+
+            breakdown_dict = dict(breakdown)
+            breakdown_dict["stage_1_exact_id_match"] = breakdown.get("stage1_exact_identifier_matched")
+            breakdown_dict["stage_2_name_similarity"] = breakdown.get("stage2_normalized_name_score")
+            breakdown_dict["stage_3_metadata_similarity"] = breakdown.get("stage3_metadata_score")
+            breakdown_dict["stage_4_semantic_similarity"] = breakdown.get("stage4_semantic_score")
 
             matches.append({
                 "complaint_id": candidate.id,
@@ -123,23 +123,30 @@ def calculate_explainable_similarity(
                 "status": candidate.status,
                 "subject": candidate.subject,
                 "category": candidate.category,
-                "similarity_score": composite_score,
+                "similarity_score": score,
+                "confidence_tier": confidence,
+                "reasons": reasons,
+                "breakdown": breakdown_dict,
+                "staged_breakdown": breakdown_dict,
+                "linkage_status": linkage_status,
+                "linkage_id": linkage.id if linkage else None,
                 "explanation": {
-                    "overall_score": composite_score,
-                    "text_similarity_score": round(text_sim, 3),
-                    "category_match": category_match,
-                    "institution_match": institution_match,
-                    "shared_keywords": shared_keywords,
-                    "rationale": rationale
+                    "overall_score": score,
+                    "text_similarity_score": breakdown["stage4_semantic_score"],
+                    "category_match": breakdown["stage3_category_relationship"] == "EXACT",
+                    "institution_match": breakdown["stage1_exact_identifier_matched"] or breakdown["stage2_alias_matched"],
+                    "shared_keywords": breakdown["stage3_shared_keywords"],
+                    "rationale": rationale_text
                 }
             })
 
-    # Sort matches by similarity score descending
+    # Sort matches by score descending
     matches.sort(key=lambda m: m["similarity_score"], reverse=True)
 
     return {
-        "matches": matches[:10],
+        "matches": matches[:15],
         "highest_score": round(highest_score, 3),
         "duplicate_suspected": duplicate_suspected,
-        "cross_bureau_overlap_suspected": cross_bureau_overlap_suspected
+        "cross_bureau_overlap_suspected": cross_bureau_overlap_suspected,
+        "total_evaluated_candidates": len(candidates)
     }

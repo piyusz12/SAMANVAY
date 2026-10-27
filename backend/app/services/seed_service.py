@@ -459,8 +459,36 @@ def seed_database(db: Session, force: bool = False):
     )
     db.add(movement)
 
-    # 10. Seed Related-Case Linkage (maintains independent histories)
-    linkage = CaseLinkage(
+    # 10. Seed Related-Case Linkages (maintains independent histories)
+    linkage1 = CaseLinkage(
+        source_complaint_id=complaint_map["AICTE/RB/2026/0002"].id,
+        target_complaint_id=complaint_map["AICTE/LC/2026/0003"].id,
+        link_type="CROSS_BUREAU_OVERLAP",
+        similarity_score=0.92,
+        explanation_json=(
+            '{"overall_score": 0.92, "text_similarity_score": 0.85, '
+            '"category_match": true, "institution_match": true, '
+            '"shared_keywords": ["infrastructure", "laboratories", "inspection", "safety"], '
+            '"rationale": "High match (92.0%): Identical institution identifier AICTE ID 1-10293847 (Apex Institute of Engineering & Technology). Concurrent active complaints across Regulation Bureau and Legal Cell."}'
+        ),
+        status="CONFIRMED_RELATED",
+        confidence_tier="HIGH",
+        reasons_json='["Identical institution identifier (AICTE ID 1-10293847)", "Concurrent active complaints across Regulation Bureau and Legal Cell", "Infrastructure deficiency and pending High Court litigation"]',
+        rationale="Cross-bureau overlap confirmed by Central Admin. Coordinated joint action required.",
+        coordination_decision="JOINT_INSPECTION",
+        coordination_notes="Standing Coordination Committee resolved to dispatch joint team (Regulation Bureau + Legal Cell) to verify compliance before court affidavit submission.",
+        lead_bureau="REGULATION_BUREAU",
+        lead_officer_id=user_map["head.rb@samanvay.aicte.gov.in"].id,
+        coordination_deadline=now + timedelta(days=14),
+        is_active=True,
+        version=1,
+        created_at=now - timedelta(days=5),
+        updated_at=now - timedelta(days=1)
+    )
+    db.add(linkage1)
+    db.flush()
+
+    linkage2 = CaseLinkage(
         source_complaint_id=complaint_map["AICTE/PGRC/2026/0004"].id,
         target_complaint_id=complaint_map["AICTE/VC/2026/0005"].id,
         link_type="CROSS_BUREAU_OVERLAP",
@@ -472,15 +500,23 @@ def seed_database(db: Session, force: bool = False):
             '"rationale": "High match (86.5%): Identical institution (National Institute of Science & Technology), '
             'shared keywords relating to faculty payroll/records, and concurrent active inquiry across PGRC and Vigilance Cell."}'
         ),
-        status="PROPOSED_BY_AI",
+        status="PENDING_REVIEW",
+        confidence_tier="HIGH",
+        reasons_json='["Identical institution identifier (AICTE ID 1-94857201)", "Shared keywords relating to faculty payroll/records", "Concurrent active inquiry across PGRC and Vigilance Cell"]',
+        rationale="AI Candidate Overlap flagged for review by PGRC and Vigilance Cell.",
+        is_active=True,
+        version=1,
         created_at=now - timedelta(days=2),
         updated_at=now - timedelta(days=2)
     )
-    db.add(linkage)
+    db.add(linkage2)
+    db.flush()
 
-    # 11. Seed Follow-up Tasks with Configurable Deadlines
+    # 11. Seed Follow-up Tasks with Configurable Deadlines & Coordination Linkage
     task1 = FollowUpTask(
         complaint_id=complaint_map["AICTE/VC/2026/0005"].id,
+        linkage_id=linkage2.id,
+        target_bureau="VIGILANCE_CELL",
         title="Conduct Biometric & EPFO Cross-Verification Inspection [SYNTHETIC]",
         description="Vigilance team surprise physical audit to cross-verify biometric punch logs against bank statements.",
         assigned_to_id=user_map["head.vigilance@samanvay.aicte.gov.in"].id,
@@ -494,6 +530,7 @@ def seed_database(db: Session, force: bool = False):
     )
     task2 = FollowUpTask(
         complaint_id=complaint_map["AICTE/LC/2026/0003"].id,
+        target_bureau="LEGAL_CELL",
         title="Draft Reply Affidavit for High Court Bombay Notice [SYNTHETIC]",
         description="Coordinate with Regulation Bureau to obtain land survey records for drafting reply in WP(C) 4410/2026.",
         assigned_to_id=user_map["head.legal@samanvay.aicte.gov.in"].id,
@@ -505,12 +542,29 @@ def seed_database(db: Session, force: bool = False):
         created_at=now - timedelta(days=2),
         updated_at=now - timedelta(days=2)
     )
+    task3 = FollowUpTask(
+        complaint_id=complaint_map["AICTE/RB/2026/0002"].id,
+        linkage_id=linkage1.id,
+        target_bureau="REGULATION_BUREAU",
+        title="Form Joint Inspection Panel with PGRC Officers [SYNTHETIC]",
+        description="Issue formal nomination memo for 2 experts to join PGRC grievance scrutiny committee at Apex campus.",
+        assigned_to_id=user_map["head.rb@samanvay.aicte.gov.in"].id,
+        deadline=now + timedelta(days=4),
+        status="PENDING",
+        priority="HIGH",
+        reminder_frequency_days=2,
+        escalation_level=0,
+        created_at=now - timedelta(days=1),
+        updated_at=now - timedelta(days=1)
+    )
     db.add(task1)
     db.add(task2)
+    db.add(task3)
 
     # 12. Seed Evidence Attachments with Metadata and SHA-256 Checksums
     attachment1 = EvidenceAttachment(
         complaint_id=complaint_map["AICTE/RB/2026/0002"].id,
+        storage_key="seed_apex_inspection_report_2026_key",
         file_name="apex_surprise_inspection_report_2026.pdf",
         original_file_name="Apex_Tech_Surprise_Inspection_Signed.pdf",
         file_path="/uploads/evidence/apex_surprise_inspection_report_2026.pdf",
@@ -520,6 +574,9 @@ def seed_database(db: Session, force: bool = False):
         uploaded_by_id=user_map["officer.rb@samanvay.aicte.gov.in"].id,
         retention_status="ACTIVE",
         is_confidential=False,
+        malware_scan_status="CLEAN",
+        legal_hold=False,
+        download_count=1,
         description="Physical verification survey notes regarding computer science faculty shortfall.",
         created_at=now - timedelta(days=21)
     )
