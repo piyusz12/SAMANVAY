@@ -1,0 +1,148 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useAppStore } from '../shared/lib/store';
+import { GlobalNavigationSidebar } from '../widgets/navigation-sidebar';
+import { ExecutiveOverviewHeader } from '../widgets/overview-header';
+import { NotificationCenterDrawer } from '../widgets/notification-center';
+
+// FSD Views
+import { DashboardPage } from '../views/dashboard';
+import { ComplaintsPage } from '../views/complaints';
+import { InstitutionsPage } from '../views/institutions';
+import { ConflictsPage } from '../views/conflicts';
+import { CoordinationPage } from '../views/coordination';
+import { AnalyticsPage } from '../views/analytics';
+import { AuditPage } from '../views/audit';
+
+// Features / Modals
+import { LodgeComplaintModal } from '../features/lodge-complaint';
+import { PersonaSwitcherModal } from '../features/auth';
+import { OverlapReviewModal } from '../features/overlap-review';
+import { StatusTransitionModal } from '../features/status-transition';
+import { TransferFileModal } from '../features/transfer-file';
+
+export default function Home() {
+  const {
+    activeTab,
+    sidebarCollapsed,
+    selectedInstitutionId,
+    setSelectedInstitutionId,
+  } = useAppStore();
+
+  // Modals state
+  const [isLodgeOpen, setIsLodgeOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isPersonaOpen, setIsPersonaOpen] = useState(false);
+
+  const [overlapReviewData, setOverlapReviewData] = useState<{ id: number; no: string } | null>(null);
+  const [statusTransitionComplaint, setStatusTransitionComplaint] = useState<any | null>(null);
+  const [transferComplaint, setTransferComplaint] = useState<any | null>(null);
+
+  const handleSelectInstitution = (id: number) => {
+    setSelectedInstitutionId(id);
+    useAppStore.getState().setActiveTab('institutions');
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+      {/* 1. Global Navigation Sidebar */}
+      <GlobalNavigationSidebar onOpenPersona={() => setIsPersonaOpen(true)} />
+
+      {/* 2. Main Content Canvas */}
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 ${
+          sidebarCollapsed ? 'ml-18' : 'ml-64'
+        }`}
+      >
+        {/* Header Bar */}
+        <ExecutiveOverviewHeader
+          onOpenLodge={() => setIsLodgeOpen(true)}
+          onOpenNotifications={() => setIsNotificationsOpen(true)}
+          onOpenPersona={() => setIsPersonaOpen(true)}
+        />
+
+        {/* Dynamic Page Views */}
+        <main className="flex-1 p-6 max-w-7xl w-full mx-auto">
+          {activeTab === 'dashboard' && (
+            <DashboardPage
+              onOpenLodge={() => setIsLodgeOpen(true)}
+              onOpenOverlapReview={(id, no) => setOverlapReviewData({ id, no })}
+              onSelectInstitution={handleSelectInstitution}
+            />
+          )}
+
+          {activeTab === 'complaints' && (
+            <ComplaintsPage
+              onOpenLodge={() => setIsLodgeOpen(true)}
+              onOpenOverlapReview={(id, no) => setOverlapReviewData({ id, no })}
+              onOpenTransition={(comp) => setStatusTransitionComplaint(comp)}
+              onOpenTransfer={(comp) => setTransferComplaint(comp)}
+            />
+          )}
+
+          {activeTab === 'institutions' && (
+            <InstitutionsPage
+              selectedId={selectedInstitutionId}
+              onSelectId={(id) => setSelectedInstitutionId(id)}
+            />
+          )}
+
+          {activeTab === 'conflicts' && (
+            <ConflictsPage
+              onOpenOverlapReview={(id, no) => setOverlapReviewData({ id, no })}
+              onSelectInstitution={handleSelectInstitution}
+            />
+          )}
+
+          {activeTab === 'coordination' && <CoordinationPage />}
+
+          {activeTab === 'analytics' && <AnalyticsPage />}
+
+          {activeTab === 'audit' && <AuditPage />}
+        </main>
+      </div>
+
+      {/* Global Modals */}
+      <LodgeComplaintModal
+        isOpen={isLodgeOpen}
+        onClose={() => setIsLodgeOpen(false)}
+      />
+
+      <PersonaSwitcherModal
+        isOpen={isPersonaOpen}
+        onClose={() => setIsPersonaOpen(false)}
+      />
+
+      <NotificationCenterDrawer
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+      />
+
+      {overlapReviewData && (
+        <OverlapReviewModal
+          isOpen={true}
+          onClose={() => setOverlapReviewData(null)}
+          complaintId={overlapReviewData.id}
+          complaintNo={overlapReviewData.no}
+        />
+      )}
+
+      {statusTransitionComplaint && (
+        <StatusTransitionModal
+          isOpen={true}
+          onClose={() => setStatusTransitionComplaint(null)}
+          complaint={statusTransitionComplaint}
+        />
+      )}
+
+      {transferComplaint && (
+        <TransferFileModal
+          isOpen={true}
+          onClose={() => setTransferComplaint(null)}
+          complaint={transferComplaint}
+        />
+      )}
+    </div>
+  );
+}
