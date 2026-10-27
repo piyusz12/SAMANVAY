@@ -76,7 +76,7 @@ class BackupService:
         else:
             # Non-sqlite placeholder / logical export
             with open(dest_path, "wb") as f:
-                f.write(b"LOGICAL_BACKUP_SNAPSHOT_AICTE_PS26264\n")
+                f.write(b"LOGICAL_BACKUP_SNAPSHOT_AICTE\n")
 
         # Compute SHA-256 checksum
         hasher = hashlib.sha256()

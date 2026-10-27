@@ -1,5 +1,5 @@
 # SAMANVAY (समन्वय) — Role-Based Access Control (RBAC) & Permission Matrix
-## SIH PS 26264: Integrated Dashboard for Monitoring and Tracking Institution Complaint Cases
+## Integrated Dashboard for Monitoring and Tracking Institution Complaint Cases
 
 > **Notice:** The roles defined herein represent proposed prototype access controls for technical evaluation and hackathon implementation, and do not supersede or constitute official AICTE statutory service regulations.
 

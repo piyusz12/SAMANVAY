@@ -1,5 +1,5 @@
 # SAMANVAY (समन्वय) — API Contract Outline Specification
-## SIH PS 26264: Integrated Dashboard for Monitoring and Tracking Institution Complaint Cases
+## Integrated Dashboard for Monitoring and Tracking Institution Complaint Cases
 
 ---
 

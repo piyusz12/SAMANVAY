@@ -1,7 +1,7 @@
 version: '3.8'
 
 # ==============================================================================
-# SAMANVAY (SIH PS 26264) — Production Docker Compose Topology
+# SAMANVAY — Production Docker Compose Topology
 #
 # Multi-Tier Container Architecture:
 # 1. proxy: Nginx TLS reverse-proxy with rate-limiting, SSL termination, and security headers

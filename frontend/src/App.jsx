@@ -254,7 +254,7 @@ export default function App() {
           <span>Government of India • Ministry of Education • All India Council for Technical Education</span>
         </div>
         <div className="gov-ps-tag">
-          SIH PS 26264: AICTE Cross-Bureau Complaint Coordination Platform
+          AICTE Cross-Bureau Complaint Coordination Platform
         </div>
       </div>
 
@@ -264,7 +264,7 @@ export default function App() {
           <div className="nav-emblem">⚖️</div>
           <div className="brand-text">
             <h1>
-              SAMANVAY <span className="brand-badge">SIH PS 26264</span>
+              SAMANVAY <span className="brand-badge">Official Portal</span>
             </h1>
             <p>Smart Integrated Dashboard for Institution Complaint Tracking Across AICTE Bureaus</p>
           </div>

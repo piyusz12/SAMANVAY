@@ -1,5 +1,5 @@
 # SAMANVAY (समन्वय) — Acceptance Criteria & Verification Matrix
-## SIH PS 26264: Integrated Dashboard for Monitoring and Tracking Institution Complaint Cases
+## Integrated Dashboard for Monitoring and Tracking Institution Complaint Cases
 
 ---
 
@@ -7,13 +7,13 @@
 
 | Req ID | Mandatory / Recommended | Feature Scope | Verification Method | Planned Phase | Status |
 | :--- | :--- | :--- | :--- | :---: | :---: |
-| **AC-01** | Mandatory (PS 26264) | Consolidated Institution-Centric View | Pytest + E2E Browser Subagent | Phase 01 | **Verified** |
-| **AC-02** | Mandatory (PS 26264) | Bureau Tracking & File Custody Identification | Pytest (`test_complaints.py`) | Phase 01 | **Verified** |
-| **AC-03** | Mandatory (PS 26264) | Cross-Bureau Conflict & Overlap Radar | Pytest (`test_conflicts.py`) | Phase 01 | **Verified** |
-| **AC-04** | Mandatory (PS 26264) | Full Lifecycle Tracking & State Transitions | Pytest (`test_complaints.py`) | Phase 01 | **Verified** |
-| **AC-05** | Mandatory (PS 26264) | 30-Day Citizen's Charter SLA Ageing & Alerts | Pytest (`test_analytics.py`) | Phase 01 | **Verified** |
-| **AC-06** | Mandatory (PS 26264) | Inter-Departmental File Transfer Workflow | Pytest (`test_movements.py`) | Phase 01 | **Verified** |
-| **AC-07** | Mandatory (PS 26264) | Cross-Bureau Analytics & Regional Reports | Pytest (`test_analytics.py`) | Phase 01 | **Verified** |
+| **AC-01** | Mandatory | Consolidated Institution-Centric View | Pytest + E2E Browser Subagent | Phase 01 | **Verified** |
+| **AC-02** | Mandatory | Bureau Tracking & File Custody Identification | Pytest (`test_complaints.py`) | Phase 01 | **Verified** |
+| **AC-03** | Mandatory | Cross-Bureau Conflict & Overlap Radar | Pytest (`test_conflicts.py`) | Phase 01 | **Verified** |
+| **AC-04** | Mandatory | Full Lifecycle Tracking & State Transitions | Pytest (`test_complaints.py`) | Phase 01 | **Verified** |
+| **AC-05** | Mandatory | 30-Day Citizen's Charter SLA Ageing & Alerts | Pytest (`test_analytics.py`) | Phase 01 | **Verified** |
+| **AC-06** | Mandatory | Inter-Departmental File Transfer Workflow | Pytest (`test_movements.py`) | Phase 01 | **Verified** |
+| **AC-07** | Mandatory | Cross-Bureau Analytics & Regional Reports | Pytest (`test_analytics.py`) | Phase 01 | **Verified** |
 | **AC-08** | Recommended (Rule 14) | Explainable AI Semantic Similarity & Linkage | Pytest (`test_similarity.py`) | Phase 01 | **Verified** |
 | **AC-09** | Recommended (Rule 07) | Immutable Regulatory Audit Ledger | Pytest (`test_analytics.py`) | Phase 01 | **Verified** |
 | **AC-10** | Recommended (Rule 10) | Bureau-Scoped RBAC & Token Auth | Pytest (`test_auth.py`) | Phase 01 | **Verified** |

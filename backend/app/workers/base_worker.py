@@ -1,5 +1,5 @@
 """
-SAMANVAY (SIH PS 26264) — Base Background Worker Lifecycle & Supervision
+SAMANVAY — Base Background Worker Lifecycle & Supervision
 Provides signal handling, heartbeat emission, and graceful draining for workers.
 """
 

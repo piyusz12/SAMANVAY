@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SAMANVAY (SIH PS 26264) — Top-Level Database Restore CLI
+SAMANVAY — Top-Level Database Restore CLI
 
 Restores database from an atomic backup with SHA-256 integrity verification.
 Usage:

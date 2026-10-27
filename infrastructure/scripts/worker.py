@@ -1,5 +1,5 @@
 """
-SAMANVAY (SIH PS 26264) — Supervised Background Worker & Scheduler Daemon
+SAMANVAY — Supervised Background Worker & Scheduler Daemon
 Handles periodic SLA monitoring, escalation triggers, and delivery retries with
 graceful signal termination and durable heartbeat reporting.
 """

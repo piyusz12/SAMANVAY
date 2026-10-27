@@ -1,5 +1,5 @@
 """
-SAMANVAY (SIH PS 26264) — Phase 17: Deployment and Operations Test Suite
+SAMANVAY — Phase 17: Deployment and Operations Test Suite
 
 Validates:
 1. Production and development configuration boundaries (fail-fast on insecure settings).

@@ -1,5 +1,5 @@
 """
-SAMANVAY (SIH PS 26264) — Regression Tests for CodeRabbit Review Fixes
+SAMANVAY — Regression Tests for CodeRabbit Review Fixes
 
 Validates:
 1. Seed script fails closed in production (APP_ENV=production).

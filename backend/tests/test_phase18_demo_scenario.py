@@ -1,5 +1,5 @@
 """
-SAMANVAY (SIH PS 26264) — Phase 18: SIH Demonstration & Final Acceptance Automated Test
+SAMANVAY — Phase 18: Demonstration & Final Acceptance Automated Test
 
 Executes the exact 10-step repeatable live demonstration scenario programmatically:
 1. Log in as an authorized officer.
@@ -31,7 +31,7 @@ client = TestClient(app)
 
 @pytest.fixture(scope="module", autouse=True)
 def prepare_demo_db():
-    """Seeds the clean SIH demonstration dataset before running the scenario."""
+    """Seeds the clean demonstration dataset before running the scenario."""
     db = SessionLocal()
     try:
         seed_demo_dataset(db, reset=True)
@@ -47,7 +47,7 @@ def get_auth_token(email: str, password: str = "Demo@AICTE2026!") -> str:
 
 
 def test_sih_demo_full_10_step_scenario():
-    """Validates the complete 10-step SIH demonstration workflow end-to-end."""
+    """Validates the complete 10-step demonstration workflow end-to-end."""
     
     # =========================================================================
     # Step 1: Log in as an authorized officer
@@ -154,7 +154,7 @@ def test_sih_demo_full_10_step_scenario():
         "similarity_score": top_match["similarity_score"],
         "explanation": top_match["explanation"],
         "rationale": "Officer confirmation: Concurrent active complaints across Approval Bureau and PGRC for Delhi Institute regarding unapproved CSE intake and capitation fees.",
-        "notes": "Reviewed and confirmed during SIH evaluation demonstration."
+        "notes": "Reviewed and confirmed during evaluation demonstration."
     }
     res_link = client.post("/api/v1/similarity/link", json=payload_link, headers=headers_pgrc)
     assert res_link.status_code == 201

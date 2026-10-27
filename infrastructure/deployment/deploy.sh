@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# SAMANVAY (SIH PS 26264) — Production Container Deployment Script
+# SAMANVAY — Production Container Deployment Script
 # ==============================================================================
 set -euo pipefail
 

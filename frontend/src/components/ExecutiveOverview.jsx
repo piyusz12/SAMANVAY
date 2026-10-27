@@ -204,7 +204,7 @@ export default function ExecutiveOverview({
             <h2 style={{ fontSize: '22px', fontWeight: '800' }}>
               Executive Monitoring & Analytics Dashboard
             </h2>
-            <span className="badge badge-blue">SIH PS 26264</span>
+            <span className="badge badge-blue">National Portal</span>
           </div>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
             Real-time cross-bureau monitoring, longitudinal disposal velocity, statutory SLA tracking, and institution conflict radar.

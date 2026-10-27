@@ -1,5 +1,5 @@
 """
-SAMANVAY (SIH PS 26264) — Background Workers Package
+SAMANVAY — Background Workers Package
 """
 
 from backend.app.workers.base_worker import is_running, emit_heartbeat, handle_shutdown

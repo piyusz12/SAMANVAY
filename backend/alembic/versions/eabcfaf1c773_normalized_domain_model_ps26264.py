@@ -1,4 +1,4 @@
-"""normalized_domain_model_ps26264
+"""normalized_domain_model
 
 Revision ID: eabcfaf1c773
 Revises: 851cb2ae3d38

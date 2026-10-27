@@ -1,5 +1,5 @@
 """
-SAMANVAY (SIH PS 26264) — Notification Delivery & Retry Worker
+SAMANVAY — Notification Delivery & Retry Worker
 Retries failed delivery attempts with exponential backoff and dead-letter handling.
 """
 

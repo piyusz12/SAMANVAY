@@ -1,5 +1,5 @@
 """
-SAMANVAY (SIH PS 26264) — Automated Database Backup & Integrity Checksummer
+SAMANVAY — Automated Database Backup & Integrity Checksummer
 Creates timestamped, SHA-256 cryptographically verified database backups
 for PostgreSQL and SQLite with retention validation.
 """

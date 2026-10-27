@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# SAMANVAY (SIH PS 26264) — Production Rollback Script
+# SAMANVAY — Production Rollback Script
 # ==============================================================================
 set -euo pipefail
 

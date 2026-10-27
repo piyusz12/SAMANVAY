@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# SAMANVAY (SIH PS 26264) — Deployment Health & Readiness Validator
+# SAMANVAY — Deployment Health & Readiness Validator
 # ==============================================================================
 set -euo pipefail
 

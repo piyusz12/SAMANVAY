@@ -1,5 +1,5 @@
 """
-SAMANVAY (SIH PS 26264) — Verified Database Restoration Utility
+SAMANVAY — Verified Database Restoration Utility
 Validates cryptographic checksums before restoring, guards against tampering,
 and verifies schema and data integrity post-restoration.
 """

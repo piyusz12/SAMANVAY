@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SAMANVAY (SIH PS 26264) — Top-Level Benchmark Runner
+SAMANVAY — Top-Level Benchmark Runner
 
 Executes reproducible performance benchmark profiling across all core endpoints.
 Usage:

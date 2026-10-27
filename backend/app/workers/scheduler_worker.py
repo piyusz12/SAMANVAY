@@ -1,5 +1,5 @@
 """
-SAMANVAY (SIH PS 26264) — SLA Deadline & Escalation Background Worker
+SAMANVAY — SLA Deadline & Escalation Background Worker
 Executes periodic Citizen's Charter 30-day checks and automated escalation sweeps.
 """
 

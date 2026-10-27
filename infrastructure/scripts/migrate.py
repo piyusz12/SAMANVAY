@@ -1,5 +1,5 @@
 """
-SAMANVAY (SIH PS 26264) — Safe Database Migration & Rollback Utility
+SAMANVAY — Safe Database Migration & Rollback Utility
 Provides programmatic, transactional migration execution, dry-run SQL generation,
 and rollback verification for production operations.
 """

@@ -1,5 +1,5 @@
 # SAMANVAY (समन्वय) — AICTE Integrated Complaint Dashboard
-### SIH Problem Statement 26264: Monitoring and Tracking Institution-Related Complaint Cases Across AICTE Bureaus/Cells
+### Integrated Dashboard for Monitoring and Tracking Institution-Related Complaint Cases Across AICTE Bureaus/Cells
 
 SAMANVAY is a production-grade, secure, integrated complaint coordination and tracking platform designed for the All India Council for Technical Education (AICTE). It dismantles inter-departmental silos across internal AICTE bureaus and cells (Regulation Bureau, PGRC, Approval Bureau, Legal Cell, Vigilance Cell, and Policy Bureau) by providing a single-window monitoring dashboard, automated cross-bureau conflict detection, 360-degree institutional dossiers, explainable AI deduplication, and an immutable regulatory audit trail.
 
@@ -53,7 +53,7 @@ SAMANVAY/
 │   ├── role-permission-matrix.md  # Prototype roles, bureau scoping, CRUD matrix
 │   ├── threat-model.md            # STRIDE security analysis & whistleblower privacy
 │   ├── acceptance-criteria.md     # Traceability matrix & Gherkin test scenarios
-│   └── SIH_DEMO_AND_FINAL_ACCEPTANCE_GUIDE.md # 5-7 min script & acceptance checklist
+│   └── DEMO_AND_FINAL_ACCEPTANCE_GUIDE.md # 5-7 min script & acceptance checklist
 ├── scripts/                       # Top-level operational CLI entrypoints
 │   ├── seed_demo_data.py          # Synthetic dataset generator CLI
 │   ├── run_benchmarks.py          # Latency benchmark runner CLI

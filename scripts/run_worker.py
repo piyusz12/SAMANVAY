@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SAMANVAY (SIH PS 26264) — Top-Level Background Worker Runner
+SAMANVAY — Top-Level Background Worker Runner
 
 Starts the background worker daemon for SLA deadline monitoring, notifications, and escalation.
 Usage:

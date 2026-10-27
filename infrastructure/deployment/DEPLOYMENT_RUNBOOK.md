@@ -1,4 +1,4 @@
-# SAMANVAY (SIH PS 26264) — Production Deployment & Operations Runbook
+# SAMANVAY — Production Deployment & Operations Runbook
 
 **Integrated Complaint Monitoring & Cross-Bureau Tracking Dashboard for AICTE**  
 **Classification:** Institutional Standard / Production Operations  

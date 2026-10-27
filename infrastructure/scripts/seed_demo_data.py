@@ -1,8 +1,8 @@
 """
-SAMANVAY (SIH PS 26264) — SIH Demonstration Synthetic Dataset Generator
+SAMANVAY — Demonstration Synthetic Dataset Generator
 
 Creates an explicitly synthetic, deterministic, and rich dataset tailored for the
-SIH 2026 live evaluation panel.
+evaluation panel.
 
 Covers all required demonstration conditions:
 1. Multiple institutions across multiple bureaus.
@@ -78,7 +78,7 @@ def reset_database(db: Session):
 
 
 def seed_demo_dataset(db: Session, reset: bool = False):
-    """Populates the complete SIH demonstration dataset."""
+    """Populates the complete demonstration dataset."""
     from backend.app.config import settings
     if settings.APP_ENV == "production":
         raise RuntimeError("Refusing to seed or reset demo data when APP_ENV=production.")
@@ -90,7 +90,7 @@ def seed_demo_dataset(db: Session, reset: bool = False):
         return
 
     now = utc_now()
-    logger.info(f"[Seed] Generating SIH demonstration dataset at timestamp: {now.isoformat()}...")
+    logger.info(f"[Seed] Generating demonstration dataset at timestamp: {now.isoformat()}...")
 
     # =========================================================================
     # 1. AICTE Bureaus & Cells
@@ -778,9 +778,9 @@ def seed_demo_dataset(db: Session, reset: bool = False):
         db.add(cfg_obj)
 
     db.commit()
-    logger.info("[Seed] SIH demonstration dataset successfully seeded!")
+    logger.info("[Seed] Demonstration dataset successfully seeded!")
     print("\n" + "=" * 70)
-    print("  SAMANVAY (SIH PS 26264) — SIH Demonstration Dataset Ready")
+    print("  SAMANVAY — Demonstration Dataset Ready")
     print("=" * 70)
     print(f"  • Institutions Seeded: {len(institutions_data)}")
     print(f"  • Bureaus Seeded:      {len(bureaus_data)}")
@@ -792,7 +792,7 @@ def seed_demo_dataset(db: Session, reset: bool = False):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="SAMANVAY SIH Demonstration Dataset Generator")
+    parser = argparse.ArgumentParser(description="SAMANVAY Demonstration Dataset Generator")
     parser.add_argument("--reset", action="store_true", help="Reset and clear all tables before seeding")
     args = parser.parse_args()
 

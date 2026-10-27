@@ -187,7 +187,7 @@ def test_staged_overlap_matching_pipeline():
 def test_labelled_benchmark_evaluation(client):
     """
     Validates precision, recall, and F1 score against the labelled synthetic evaluation dataset.
-    Confirms tuned threshold performance per PS 26264 acceptance criteria.
+    Confirms tuned threshold performance per acceptance criteria.
     """
     res = client.get("/api/v1/similarity/evaluate-benchmark")
     assert res.status_code == 200

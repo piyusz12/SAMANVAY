@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SAMANVAY (SIH PS 26264) — Top-Level Database Migration CLI
+SAMANVAY — Top-Level Database Migration CLI
 
 Runs database schema migrations via Alembic.
 Usage:

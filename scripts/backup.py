@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SAMANVAY (SIH PS 26264) — Top-Level Database Backup CLI
+SAMANVAY — Top-Level Database Backup CLI
 
 Creates atomic, SHA-256 cryptographically checksummed database backups.
 Usage:

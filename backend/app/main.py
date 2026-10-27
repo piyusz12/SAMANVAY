@@ -69,7 +69,7 @@ docs_enabled = settings.DEBUG or settings.APP_ENV in ("development", "test")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="Integrated Dashboard for Monitoring and Tracking Institution-Related Complaint Cases Across AICTE Bureaus/Cells (SIH PS 26264)",
+    description="Integrated Dashboard for Monitoring and Tracking Institution-Related Complaint Cases Across AICTE Bureaus/Cells",
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json" if docs_enabled else None,
     docs_url=f"{settings.API_V1_STR}/docs" if docs_enabled else None,

@@ -1,7 +1,7 @@
-# SAMANVAY (समन्वय) — SIH Demonstration & Final Acceptance Guide
-## SIH Problem Statement PS 26264: Integrated Dashboard for Monitoring and Tracking Institution Complaint Cases
+# SAMANVAY (समन्वय) — Demonstration & Final Acceptance Guide
+## Integrated Dashboard for Monitoring and Tracking Institution Complaint Cases
 **Version:** 1.0 (Final Acceptance Release)  
-**Classification:** Official Technical Documentation — Ministry of Education / AICTE SIH 2026 Evaluation  
+**Classification:** Official Technical Documentation — Ministry of Education / AICTE Evaluation  
 **Status:** 100% Tested & Verified (Reproducible Environment)
 
 ---
@@ -16,7 +16,7 @@ In the existing administrative framework of the All India Council for Technical 
 - **Vigilance Cell:** Fraudulent ghost faculty, forged credentials, anti-corruption inquiries.
 - **Policy & Academic Bureau:** National Education Policy (NEP) compliance, curricula, accreditation.
 
-### The Core Challenge (PS 26264)
+### The Core Challenge
 Prior to SAMANVAY, these bureaus functioned in administrative silos. An institution could be facing simultaneous punitive inquiries across multiple departments—such as a fee extortion complaint in PGRC, an unapproved batch in the Approval Bureau, and a pending writ petition in the Legal Cell—without any single bureau having visibility into concurrent actions. This led to conflicting orders, uncoordinated on-site inspections, duplicated administrative workload, and systemic delays.
 
 ### The Solution: SAMANVAY
@@ -36,7 +36,7 @@ To ensure repeatable, realistic, and legally safe demonstrations without disclos
 
 ### 2.1 Seed Execution Commands
 ```powershell
-# Reset database and generate a clean SIH demonstration dataset
+# Reset database and generate a clean demonstration dataset
 venv\Scripts\python.exe infrastructure\scripts\seed_demo_data.py --reset
 
 # Run without --reset to inspect existing state or safely seed if empty
@@ -87,7 +87,7 @@ venv\Scripts\python.exe infrastructure\scripts\seed_demo_data.py
 
 | Timing | Scene / Step | Presenter Dialogue (Spoken) | On-Screen Action & Click Targets | Verification Points |
 | :--- | :--- | :--- | :--- | :--- |
-| **0:00 - 0:45** | **Step 1: Introduction & Officer Login** | *"Respected Jury members, in AICTE today, complaints against technical colleges arrive in separate bureaus—PGRC, Approval, Regulation, Legal, and Vigilance—operating in silos. Welcome to SAMANVAY, the national integrated complaint monitoring system for PS 26264. I will first log in as Shri Amit Patel, Case Officer in the Public Grievance Redressal Cell."* | 1. Open `http://127.0.0.1:5173/`<br>2. Select Role / Enter `officer.pgrc@samanvay.aicte.gov.in`<br>3. Password `Demo@AICTE2026!`<br>4. Click **Sign In**. | JWT issued, persona badge indicates `PGRC — Case Officer`. Navigation bar loads PGRC-scoped complaint list. |
+| **0:00 - 0:45** | **Step 1: Introduction & Officer Login** | *"Respected members, in AICTE today, complaints against technical colleges arrive in separate bureaus—PGRC, Approval, Regulation, Legal, and Vigilance—operating in silos. Welcome to SAMANVAY, the national integrated complaint monitoring system. I will first log in as Shri Amit Patel, Case Officer in the Public Grievance Redressal Cell."* | 1. Open `http://127.0.0.1:5173/`<br>2. Select Role / Enter `officer.pgrc@samanvay.aicte.gov.in`<br>3. Password `Demo@AICTE2026!`<br>4. Click **Sign In**. | JWT issued, persona badge indicates `PGRC — Case Officer`. Navigation bar loads PGRC-scoped complaint list. |
 | **0:45 - 1:30** | **Step 2: Institution Search & 360° Dossier** | *"An officer investigating a complaint must see the institution's complete regulatory history. Let us locate 'Delhi Institute of Technology & Management', AICTE Permanent ID 1-99887766. Notice the instant 360-degree dossier."* | 1. Navigate to **Institutions** tab.<br>2. Type `Delhi Institute` or `1-99887766` in search bar.<br>3. Click **View Dossier** for Delhi Institute. | Unified dossier displays: AICTE ID, AISHE code, address, active bureau tags (`PGRC`, `APPROVAL_BUREAU`, `LEGAL_CELL`), and active conflict alert badge. |
 | **1:30 - 2:30** | **Step 3: Multi-Bureau Complaint Ingestion** | *"Now let us simulate an active regulatory conflict. An unapproved CSE course batch is flagged in the Approval Bureau, while simultaneously a parent files a capitation fee extortion grievance in PGRC."* | 1. Switch persona to Approval Officer or open complaint modal.<br>2. Show Approval case `AICTE/APPR/2026/0001` (Unapproved CSE batch).<br>3. Switch back to PGRC Officer, click **+ Lodge Complaint**.<br>4. Enter Delhi Institute, Category: `FEE_EXTORTION`, Subject: `Exorbitant cash capitation fee demanded for Computer Science branch seat`.<br>5. Click **Submit**. | Case registered with unique tracking number. System immediately triggers background overlap check. |
 | **2:30 - 3:30** | **Step 4: Overlap Engine & Explainability** | *"Notice what happens instantly upon submission. The SAMANVAY Overlap Engine detects a potential cross-bureau collision. Crucially, this is not an opaque black box. The UI explicitly explains WHY the cases are related: identical AICTE ID, high lexical overlap on 'Computer Science', 'batch', 'intake', and concurrent timeline."* | 1. Click **Overlap Detection** or view case details.<br>2. View the candidate match card for `AICTE/APPR/2026/0001`.<br>3. Highlight **Similarity Score (94%)**, **Confidence Tier: HIGH**, and the **Explanation Breakdown** box. | Rationale clearly breaks down: `[Exact AICTE ID Match]`, `[Shared Keywords: cse, intake, computer science]`, `[Category Correlation: Intake/Capitation nexus]`. |
@@ -232,19 +232,19 @@ sequenceDiagram
 
 ## 5. Feature-to-Requirement Traceability Matrix
 
-| Requirement Clause (PS 26264) | Mandatory / Rec. | Implementation Module & Frontend Component | Backend API Endpoint & Service | Database Entity / Tables | Pytest Verification Suite |
+| Requirement Clause | Mandatory / Rec. | Implementation Module & Frontend Component | Backend API Endpoint & Service | Database Entity / Tables | Pytest Verification Suite |
 | :--- | :---: | :--- | :--- | :--- | :--- |
-| **R1: Consolidated Institution Dossier** (Unified 360° history across bureaus) | **Mandatory** | `frontend/src/components/InstitutionRegistryView.jsx` | `GET /api/v1/institutions/{id}/dossier`<br>`institution_service.py` | `institutions`, `complaints` | `test_institution_registry.py`<br>`test_phase18_sih_demo_scenario.py` |
+| **R1: Consolidated Institution Dossier** (Unified 360° history across bureaus) | **Mandatory** | `frontend/src/components/InstitutionRegistryView.jsx` | `GET /api/v1/institutions/{id}/dossier`<br>`institution_service.py` | `institutions`, `complaints` | `test_institution_registry.py`<br>`test_phase18_demo_scenario.py` |
 | **R2: Bureau Tracking & File Custody** (Know which officer and bureau holds the file) | **Mandatory** | `frontend/src/components/ComplaintCard.jsx`<br>`frontend/src/components/ComplaintDetailModal.jsx` | `GET /api/v1/complaints/{id}`<br>`PATCH /api/v1/complaints/{id}/assign`<br>`complaint_service.py` | `complaints.assigned_officer_id`, `case_assignment_histories` | `test_complaints.py`<br>`test_complaint_lifecycle.py` |
-| **R3: Cross-Bureau Conflict Radar** (Detect overlapping actions across multiple departments) | **Mandatory** | `frontend/src/components/CrossBureauConflictRadar.jsx` | `GET /api/v1/conflicts/overlapping`<br>`conflict_service.py` | `complaints`, `institutions` | `test_conflicts.py`<br>`test_phase18_sih_demo_scenario.py` |
+| **R3: Cross-Bureau Conflict Radar** (Detect overlapping actions across multiple departments) | **Mandatory** | `frontend/src/components/CrossBureauConflictRadar.jsx` | `GET /api/v1/conflicts/overlapping`<br>`conflict_service.py` | `complaints`, `institutions` | `test_conflicts.py`<br>`test_phase18_demo_scenario.py` |
 | **R4: Strict State Machine Lifecycle** (LODGED -> UNDER_INQUIRY -> SHOW_CAUSE -> RESOLVED) | **Mandatory** | `frontend/src/components/StatusTransitionModal.jsx` | `PATCH /api/v1/complaints/{id}/status`<br>`complaint_service.py` | `complaints.status`, `case_status_histories` | `test_complaint_lifecycle.py`<br>`test_phase15_e2e_lifecycle.py` |
-| **R5: 30-Day Citizen's Charter SLA** (Ageing metrics, yellow/red badges, escalations) | **Mandatory** | `frontend/src/components/SlaBadge.jsx`<br>`frontend/src/components/NotificationCenter.jsx` | `GET /api/v1/analytics/overview`<br>`POST /api/v1/alerts/run-scheduler`<br>`deadline_service.py` | `complaints.sla_due_date`, `notifications` | `test_deadlines_and_escalation.py`<br>`test_phase18_sih_demo_scenario.py` |
+| **R5: 30-Day Citizen's Charter SLA** (Ageing metrics, yellow/red badges, escalations) | **Mandatory** | `frontend/src/components/SlaBadge.jsx`<br>`frontend/src/components/NotificationCenter.jsx` | `GET /api/v1/analytics/overview`<br>`POST /api/v1/alerts/run-scheduler`<br>`deadline_service.py` | `complaints.sla_due_date`, `notifications` | `test_deadlines_and_escalation.py`<br>`test_phase18_demo_scenario.py` |
 | **R6: Inter-Bureau File Transfers** (Formal custody handoff with mandatory audit reason) | **Mandatory** | `frontend/src/components/TransferModal.jsx` | `POST /api/v1/movements/transfer`<br>`case_movement_service.py` | `case_movements` | `test_movements.py`<br>`test_phase15_e2e_lifecycle.py` |
 | **R7: Executive Analytics & Reports** (Aggregations by region, bureau, category, SLA breach) | **Mandatory** | `frontend/src/components/MacroAnalyticsOverview.jsx`<br>`frontend/src/components/ReportsView.jsx` | `GET /api/v1/analytics/overview`<br>`GET /api/v1/reports/bureau`<br>`reporting_service.py` | `complaints`, `bureaus`, `complaint_categories` | `test_analytics.py`<br>`test_reporting_and_exports.py` |
-| **R8: Explainable Overlap Engine** (Confidence tiers, reason breakdown, human confirmation) | **Recommended** | `frontend/src/components/SimilarityMatchesModal.jsx` | `POST /api/v1/similarity/check`<br>`POST /api/v1/similarity/link`<br>`similarity_service.py` | `case_linkages` | `test_similarity.py`<br>`test_phase18_sih_demo_scenario.py` |
-| **R9: Cryptographic Audit Trail** (SHA-256 hash chaining, immutable regulatory log) | **Recommended** | `frontend/src/components/AuditTrailModal.jsx`<br>`frontend/src/components/AuditLedgerView.jsx` | `GET /api/v1/audit/logs`<br>`GET /api/v1/audit/verify-integrity`<br>`audit_service.py` | `audit_logs.previous_hash`, `audit_logs.record_hash` | `test_security_hardening.py`<br>`test_phase18_sih_demo_scenario.py` |
+| **R8: Explainable Overlap Engine** (Confidence tiers, reason breakdown, human confirmation) | **Recommended** | `frontend/src/components/SimilarityMatchesModal.jsx` | `POST /api/v1/similarity/check`<br>`POST /api/v1/similarity/link`<br>`similarity_service.py` | `case_linkages` | `test_similarity.py`<br>`test_phase18_demo_scenario.py` |
+| **R9: Cryptographic Audit Trail** (SHA-256 hash chaining, immutable regulatory log) | **Recommended** | `frontend/src/components/AuditTrailModal.jsx`<br>`frontend/src/components/AuditLedgerView.jsx` | `GET /api/v1/audit/logs`<br>`GET /api/v1/audit/verify-integrity`<br>`audit_service.py` | `audit_logs.previous_hash`, `audit_logs.record_hash` | `test_security_hardening.py`<br>`test_phase18_demo_scenario.py` |
 | **R10: Bureau-Scoped RBAC** (Super Admin, Bureau Admin, Case Officer, Viewer, Auditor) | **Recommended** | `frontend/src/context/AuthContext.jsx`<br>`frontend/src/components/RoleBadge.jsx` | `backend/app/core/security.py`<br>`require_role()`, `require_bureau_access()` | `users.role`, `bureau_memberships` | `test_auth_rbac_bureau_scope.py`<br>`test_phase15_role_bureau_matrix.py` |
-| **R11: Coordination Workspace** (Joint inquiry action plan, tasks, shared deadlines) | **Recommended** | `frontend/src/components/CoordinationWorkspaceModal.jsx` | `POST /api/v1/coordination/workspaces/{id}/decision`<br>`POST /api/v1/coordination/workspaces/{id}/tasks` | `case_linkages`, `follow_up_tasks` | `test_coordination_workspace.py`<br>`test_phase18_sih_demo_scenario.py` |
+| **R11: Coordination Workspace** (Joint inquiry action plan, tasks, shared deadlines) | **Recommended** | `frontend/src/components/CoordinationWorkspaceModal.jsx` | `POST /api/v1/coordination/workspaces/{id}/decision`<br>`POST /api/v1/coordination/workspaces/{id}/tasks` | `case_linkages`, `follow_up_tasks` | `test_coordination_workspace.py`<br>`test_phase18_demo_scenario.py` |
 | **R12: Evidence Document Vault** (Strict magic-byte validation, size limits, download hashes) | **Recommended** | `frontend/src/components/EvidenceUploader.jsx` | `POST /api/v1/evidence/upload`<br>`GET /api/v1/evidence/{id}/download` | `evidence_attachments` | `test_evidence_management.py`<br>`test_phase14_security_hardening.py` |
 
 ---
@@ -257,7 +257,7 @@ sequenceDiagram
 - **Total Tests Passed:** **163 Passed** (0 Failed, 0 Skipped)
 - **Execution Duration:** 12.63 seconds
 - **Key Modules Executed:**
-  - `test_phase18_sih_demo_scenario.py`: 10-step full demonstration workflow (1.61s).
+  - `test_phase18_demo_scenario.py`: 10-step full demonstration workflow (1.61s).
   - `test_phase15_e2e_lifecycle.py`: Complete lifecycle state transitions.
   - `test_auth_rbac_bureau_scope.py`: Cross-bureau boundary isolation.
   - `test_coordination_workspace.py`: Workspace decisions and multi-bureau tasks.
@@ -337,7 +337,7 @@ In strict compliance with evaluation integrity guidelines, all current design bo
 | **Notification Gateway** | Database-persisted event bus with retry logic and console/log dispatch. | Avoids dependency on external NIC/CDAC SMS/SMTP gateways during air-gapped or evaluation panel presentations. | Integration with Government of India NIC/CDAC SMS Gateway and Gov.in SMTP mail servers with OAuth2 authentication. |
 | **Evidence Antivirus Scanning** | Strict magic-byte sniffing, extension blacklisting, filename sanitization, and SHA-256 integrity verification. | Full ClamAV container sidecar requires ~1.5 GB RAM footprint, which may exceed lightweight demonstration laptops. | Dedicated ClamAV daemon sidecar container connected via UNIX socket in the production Kubernetes pod spec. |
 | **Database Scalability** | Single-node PostgreSQL with Hikari-equivalent QueuePool connection pooling and SQLite support. | Fully sufficient for all state and regional demonstration workloads up to 50,000 active concurrent cases. | PostgreSQL multi-region read replicas with Citus sharding for nationwide multi-state horizontal scaling. |
-| **Multilingual Ingestion** | Primary processing in English with UTF-8 support for regional institution names and addresses. | Focuses on SIH PS 26264 core multi-bureau deduplication logic. | Bhashini AI integration for automatic real-time translation across all 22 official Indian languages. |
+| **Multilingual Ingestion** | Primary processing in English with UTF-8 support for regional institution names and addresses. | Focuses on core multi-bureau deduplication logic. | Bhashini AI integration for automatic real-time translation across all 22 official Indian languages. |
 
 ---
 
@@ -354,8 +354,8 @@ In strict compliance with evaluation integrity guidelines, all current design bo
 | **AC-07** | **Role-Based Tenant Isolation:** Strict boundaries prevent unauthorized bureaus or read-only auditors from modifying cases. | **ACCEPTED** | Auditor received `HTTP 403` on lodge attempt; Regulation Bureau officer received `HTTP 403` on PGRC linkage attempt. |
 | **AC-08** | **Independent File Integrity:** Linked cases retain strictly unmerged file histories and independent case numbers. | **ACCEPTED** | Verified distinct case numbers (`AICTE/APPR/...` vs `AICTE/PGRC/...`) and independent event sequences in `audit_logs`. |
 | **AC-09** | **Cryptographic Tamper-Evidence:** Audit records are secured via a SHA-256 hash chain with runtime integrity validation. | **ACCEPTED** | `GET /api/v1/audit/verify-integrity` returns `is_intact: True` across all records. |
-| **AC-10** | **Reproducible Deployment & Automated Testing:** Entire scenario executes reproducibly from documented scripts with zero manual hacks. | **ACCEPTED** | `test_phase18_sih_demo_scenario.py` passes 100% in 1.61s; all 163 backend tests pass; all 7 frontend tests pass. |
+| **AC-10** | **Reproducible Deployment & Automated Testing:** Entire scenario executes reproducibly from documented scripts with zero manual hacks. | **ACCEPTED** | `test_phase18_demo_scenario.py` passes 100% in 1.61s; all 163 backend tests pass; all 7 frontend tests pass. |
 
 ---
-*SAMANVAY (समन्वय) — AICTE Integrated Complaint Monitoring Dashboard (PS 26264)*  
-*Developed for Smart India Hackathon 2026. All rights reserved.*
+*SAMANVAY (समन्वय) — AICTE Integrated Complaint Monitoring Dashboard*  
+*Developed for AICTE. All rights reserved.*

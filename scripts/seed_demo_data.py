@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-SAMANVAY (SIH PS 26264) — Top-Level Synthetic Dataset Generator
+SAMANVAY — Top-Level Synthetic Dataset Generator
 
-Entry point to seed the deterministic SIH demonstration dataset.
+Entry point to seed the deterministic demonstration dataset.
 Usage:
     python scripts/seed_demo_data.py --reset
 """

@@ -1,5 +1,5 @@
 # =====================================================================
-# SAMANVAY — Production Frontend Dockerfile (SIH PS 26264)
+# SAMANVAY — Production Frontend Dockerfile
 # Multi-stage build with Nginx production delivery
 # =====================================================================
 

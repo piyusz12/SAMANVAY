@@ -1,5 +1,5 @@
 # SAMANVAY (समन्वय) — Requirements Specification Document
-## SIH Problem Statement 26264: Integrated Dashboard for Monitoring and Tracking Institution-Related Complaint Cases Across AICTE Bureaus/Cells
+## Integrated Dashboard for Monitoring and Tracking Institution-Related Complaint Cases Across AICTE Bureaus/Cells
 
 ---
 
@@ -16,7 +16,7 @@ Currently, complaints are handled in organizational silos across multiple intern
 * **Vigilance Cell (VC):** Allegations of fraud, ghost faculty documentation, bribery, forged approval letters, and criminal malpractice.
 * **Policy & Academic Planning Bureau (PAPB):** Curriculum credit compliance, reservation norm violations, and academic policy disputes.
 
-### 1.2 Core Operational Challenges Identified in PS 26264
+### 1.2 Core Operational Challenges Identified
 1. **Lack of Cross-Bureau Visibility:** Bureaus lack visibility into concurrent actions initiated by other cells regarding the same technical institution.
 2. **Duplication of Effort & Overlapping Actions:** One bureau may schedule an inspection or issue a show-cause notice while another cell is independently mediating or while the Legal Cell is contesting a status-quo order.
 3. **Contradictory Regulatory Directives:** A technical institution might receive punitive closure or penalty recommendations from one cell while receiving an Extension of Approval (EOA) from another.
@@ -28,7 +28,7 @@ Currently, complaints are handled in organizational silos across multiple intern
 ## 2. Requirements Classification
 
 To ensure regulatory compliance and engineering clarity, requirements are categorized into:
-* **[MANDATORY - PS 26264]:** Explicitly required by the problem statement description.
+* **[MANDATORY]:** Explicitly required by the problem statement description.
 * **[RECOMMENDED DESIGN DECISION]:** Best-practice engineering decisions introduced to ensure production-grade security, explainability, auditability, and scalability.
 
 ---
@@ -44,19 +44,19 @@ To ensure regulatory compliance and engineering clarity, requirements are catego
 * **FR-01.5 [RECOMMENDED]: Read-Only Auditor (Vigilance / Quality Reviewer):** Council-wide read-only access for compliance auditing, SLA reporting, and forensic review without data modification privileges.
 
 ### FR-02: Institution Registry and Identification
-* **FR-02.1 [MANDATORY - PS 26264]: Unique AICTE Permanent ID Mapping:** Every complaint must strictly map to an authoritative AICTE Permanent Institute ID (e.g., `1-10293847`).
-* **FR-02.2 [MANDATORY - PS 26264]: Consolidated Institutional Profile:** System must compile an institutional dossier indexing:
+* **FR-02.1 [MANDATORY]: Unique AICTE Permanent ID Mapping:** Every complaint must strictly map to an authoritative AICTE Permanent Institute ID (e.g., `1-10293847`).
+* **FR-02.2 [MANDATORY]: Consolidated Institutional Profile:** System must compile an institutional dossier indexing:
   * Official Name, Approval Status (Approved, Under Scrutiny, Show Cause, Withdrawn, Probation), Institution Category (Govt, Govt-Aided, Private-Self-Financed, Deemed University).
   * State, District, and AICTE Regional Office (Northern, North-West, Eastern, Western, Southern, South-West, Central).
   * Lifetime complaint counter, active inquiry counter, and disposed case counter.
 * **FR-02.3 [RECOMMENDED]: Multi-Bureau History Timeline:** Interactive visual timeline showing every past and present case registered against the institution across all cells.
 
 ### FR-03: Complaint Registration, Lifecycle, and State Transitions
-* **FR-03.1 [MANDATORY - PS 26264]: Unified Single-Window Intake:** Intake portal for registering complaints across all bureaus with structured categorization:
+* **FR-03.1 [MANDATORY]: Unified Single-Window Intake:** Intake portal for registering complaints across all bureaus with structured categorization:
   * Categories: Fee Extortion, Faculty Salary Withheld, Infrastructure Deficit, Unapproved Courses, Harassment, Admission Fraud, Fake Faculty / Documents, Recognition Dispute.
   * Complainant Particulars: Name, category (Student, Faculty, Parent, Citizen, Anonymous), contact information, and detailed allegations.
 * **FR-03.2 [RECOMMENDED]: Standard Case Tracking Numbering:** System automatically generates tracking identifiers following the pattern: `AICTE/{BUREAU_ACRONYM}/{YEAR}/{SEQUENCE:04d}` (e.g. `AICTE/PGRC/2026/0042`).
-* **FR-03.3 [MANDATORY - PS 26264]: Complaint Lifecycle States:**
+* **FR-03.3 [MANDATORY]: Complaint Lifecycle States:**
   1. `LODGED`: Formally recorded in intake queue; awaiting preliminary scrutiny.
   2. `SCRUTINY_PENDING`: Preliminary document verification underway.
   3. `UNDER_INQUIRY`: Formal inquiry initiated; communications issued to institution.
@@ -66,11 +66,11 @@ To ensure regulatory compliance and engineering clarity, requirements are catego
   7. `DISPOSED`: Case formally closed by competent authority with official closure order.
   8. `TRANSFERRED`: Case custody formally transferred to another bureau.
   9. `ESCALATED`: Case escalated to Vigilance, Legal, or Council Leadership.
-* **FR-03.4 [MANDATORY - PS 26264]: Controlled State Transitions:** Status cannot transition arbitrarily. Every transition requires mandatory notes and records actor identity, timestamp, and state diff. Closures (`RESOLVED`, `DISPOSED`) require an Official Disposal Summary.
+* **FR-03.4 [MANDATORY]: Controlled State Transitions:** Status cannot transition arbitrarily. Every transition requires mandatory notes and records actor identity, timestamp, and state diff. Closures (`RESOLVED`, `DISPOSED`) require an Official Disposal Summary.
 
 ### FR-04: Cross-Bureau Overlap Detection & Explainable Related-Case Linking
-* **FR-04.1 [MANDATORY - PS 26264]: Live Master Conflict Radar:** System must automatically detect when two or more distinct bureaus maintain active (non-disposed) cases against the same technical institution.
-* **FR-04.2 [MANDATORY - PS 26264]: Multi-Bureau Collision Alerts:** Prominently flag conflicting institutions on executive and bureau dashboards with explicit identification of all involved bureaus.
+* **FR-04.1 [MANDATORY]: Live Master Conflict Radar:** System must automatically detect when two or more distinct bureaus maintain active (non-disposed) cases against the same technical institution.
+* **FR-04.2 [MANDATORY]: Multi-Bureau Collision Alerts:** Prominently flag conflicting institutions on executive and bureau dashboards with explicit identification of all involved bureaus.
 * **FR-04.3 [RECOMMENDED]: Explainable NLP Semantic Similarity Matching:**
   * Uses vectorization and narrative token matching (TF-IDF cosine similarity + weighted metadata heuristics) to detect duplicate or closely related allegations.
   * Generates an **Explainable Attribution Breakdown** displaying:
@@ -83,7 +83,7 @@ To ensure regulatory compliance and engineering clarity, requirements are catego
 * **FR-04.4 [RECOMMENDED - RULE 14]: Human-in-the-Loop Governance:** AI matching results are strictly advisory. The system is prohibited from automatically merging cases, modifying legal status, or taking punitive action based solely on AI output. Linking requires explicit officer verification.
 
 ### FR-05: Inter-Bureau Coordination Decisions & Follow-up Ownership
-* **FR-05.1 [MANDATORY - PS 26264]: Inter-Departmental File Transfer Workflow:**
+* **FR-05.1 [MANDATORY]: Inter-Departmental File Transfer Workflow:**
   * Bureau Officer initiates a transfer request specifying target bureau and factual justification.
   * Bureau Head or Super Admin of the target bureau reviews and explicitly `ACCEPTS` or `REJECTS` the transfer with documented reasons.
   * Upon acceptance, case custody updates atomically, and the originating bureau is designated as an observer.
@@ -92,24 +92,24 @@ To ensure regulatory compliance and engineering clarity, requirements are catego
   * Centralized coordination notes accessible across involved bureaus.
 
 ### FR-06: Pending-Case Monitoring, Ageing, Deadlines, and Escalation
-* **FR-06.1 [MANDATORY - PS 26264]: Real-Time Case Ageing & SLA Tracking:**
+* **FR-06.1 [MANDATORY]: Real-Time Case Ageing & SLA Tracking:**
   * System tracks case duration against the Citizen's Charter standard deadline (configurable default: 30 calendar days).
   * Ageing Tiers:
     * Tier 1 (0–15 Days): `🟢 On Track`
     * Tier 2 (16–23 Days): `🟡 Normal Scrutiny`
     * Tier 3 (24–30 Days): `🟠 Approaching Deadline (Urgent Alert)`
     * Tier 4 (> 30 Days): `🚨 Overdue (SLA Breached)`
-* **FR-06.2 [MANDATORY - PS 26264]: Automated Deadline Alerts & Escalation Triggers:**
+* **FR-06.2 [MANDATORY]: Automated Deadline Alerts & Escalation Triggers:**
   * Automated notifications dispatched to Desk Officers at 24 days.
   * Escalation alerts dispatched to Bureau Administrator and Super Admin upon day 31.
 
 ### FR-07: Dashboards, Search, Filters, and Management Reports
-* **FR-07.1 [MANDATORY - PS 26264]: Cross-Bureau Analytical Dashboard:**
+* **FR-07.1 [MANDATORY]: Cross-Bureau Analytical Dashboard:**
   * Executive KPIs: Total complaints, active load, multi-bureau overlaps, overdue breach counter, disposal rate.
   * Bureau Performance Matrix: Total cases, active inquiry load, resolved cases, overdue count, average resolution duration in days.
   * Regional Breakdown: Complaint density and overlap frequency across AICTE regions.
   * High-Risk Hotspot Radar: Top institutions ranked by active complaint volume and multi-bureau collision flags.
-* **FR-07.2 [MANDATORY - PS 26264]: Multi-Facet Search & Filtering:**
+* **FR-07.2 [MANDATORY]: Multi-Facet Search & Filtering:**
   * Full-text search by Complaint Tracking ID, Institution Name, AICTE Permanent ID, and Complainant Name.
   * Multi-facet filtering by Bureau, Status, Priority, Grievance Category, and SLA Overdue flag.
 * **FR-07.3 [RECOMMENDED]: Management Export Formats:** Export capability for filtered reports into standard tabular (CSV/Excel) and executive dossier views.
@@ -124,15 +124,15 @@ To ensure regulatory compliance and engineering clarity, requirements are catego
   * Prevent overwriting or in-place file mutation; revisions are stored as appended audit attachments.
 
 ### FR-09: Notifications and Complete Action History
-* **FR-09.1 [MANDATORY - PS 26264]: Event-Driven In-App Alerts:**
+* **FR-09.1 [MANDATORY]: Event-Driven In-App Alerts:**
   * Real-time notification drawer displaying: Cross-Bureau Collision Alerts, SLA Deadline Warnings, Transfer Requests, and Case Assignments.
-* **FR-09.2 [MANDATORY - PS 26264]: Complete Immutable Action History:**
+* **FR-09.2 [MANDATORY]: Complete Immutable Action History:**
   * Every operational action is recorded in an immutable, append-only regulatory audit ledger.
   * Mandatory audit attributes: Event ID, Complaint ID, Institution ID, Actor ID, Actor Full Name, Actor Role, Actor Bureau, Action Type, Detailed Narrative, Pre-state, Post-state, and Timestamp.
 
 ### FR-10: Authentication, Authorization, Privacy, and Data Protection
 * **FR-10.1 [RECOMMENDED]: Authentication:** Industry-standard JWT access tokens with bcrypt password hashing (minimum work factor 12).
-* **FR-10.2 [MANDATORY - PS 26264]: Bureau-Scoped Authorization:** Backend enforcement of role and bureau boundaries on all API routes; UI button hiding is non-authoritative.
+* **FR-10.2 [MANDATORY]: Bureau-Scoped Authorization:** Backend enforcement of role and bureau boundaries on all API routes; UI button hiding is non-authoritative.
 * **FR-10.3 [RECOMMENDED]: Complainant Privacy & PII Protection:**
   * Student/faculty sensitive identifiers (phone, personal email) are restricted to authorized scrutiny officers.
   * Support anonymous whistleblower protections where complainant identity is redacted from institutional notices.

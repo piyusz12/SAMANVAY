@@ -87,7 +87,7 @@ def create_development_admin(db) -> User:
 
 def setup_dev_admin() -> int:
     print("=" * 70)
-    print("  SAMANVAY (PS 26264) - Synthetic Development Administrator Setup")
+    print("  SAMANVAY - Synthetic Development Administrator Setup")
     print("=" * 70)
 
     if settings.APP_ENV not in ("development", "testing"):

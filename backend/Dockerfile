@@ -1,5 +1,5 @@
 # =====================================================================
-# SAMANVAY — Production Backend Dockerfile (SIH PS 26264)
+# SAMANVAY — Production Backend Dockerfile
 # Multi-stage, non-root, hardened container image
 # =====================================================================
 
