@@ -1,6 +1,7 @@
 import time
 import logging
 from functools import wraps
+from typing import Any
 from sqlalchemy import create_engine, event
 from sqlalchemy.exc import OperationalError, DBAPIError
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -8,8 +9,8 @@ from backend.app.config import settings
 
 logger = logging.getLogger("samanvay.database")
 
-connect_args = {}
-pool_kwargs = {
+connect_args: dict[str, Any] = {}
+pool_kwargs: dict[str, Any] = {
     "pool_pre_ping": True,  # Verifies connection liveness before checkout
     "echo": False
 }
@@ -78,8 +79,10 @@ def with_db_retry(max_retries: int = 3, base_delay: float = 0.05):
                         time.sleep(delay)
                     else:
                         raise
-            logger.error(f"DB retry exhausted after {max_retries} attempts: {last_exc}")
-            raise last_exc
+            if last_exc is not None:
+                logger.error(f"DB retry exhausted after {max_retries} attempts: {last_exc}")
+                raise last_exc
+            raise RuntimeError(f"Database operation failed after {max_retries} attempts.")
         return wrapper
     return decorator
 
