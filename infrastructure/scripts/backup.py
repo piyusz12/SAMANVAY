@@ -67,10 +67,34 @@ def backup_database(destination_dir: str = None) -> dict:
 
     elif dialect == "postgresql":
         archive_path = os.path.join(target_dir, f"{archive_filename}.dump")
-        # Run pg_dump using connection string
-        cmd = ["pg_dump", "-Fc", "--no-owner", "--no-privileges", "-d", db_url, "-f", archive_path]
+        from sqlalchemy.engine import make_url
+        url = make_url(db_url)
+        cmd = ["pg_dump", "-Fc", "--no-owner", "--no-privileges"]
+        if url.host:
+            cmd.extend(["-h", url.host])
+        if url.port:
+            cmd.extend(["-p", str(url.port)])
+        if url.username:
+            cmd.extend(["-U", url.username])
+        if url.database:
+            cmd.extend(["-d", url.database])
+        cmd.extend(["-f", archive_path])
+
+        env = os.environ.copy()
+        if url.password:
+            env["PGPASSWORD"] = url.password
+        if url.query:
+            if "sslmode" in url.query:
+                env["PGSSLMODE"] = url.query["sslmode"]
+            if "sslrootcert" in url.query:
+                env["PGSSLROOTCERT"] = url.query["sslrootcert"]
+            if "sslcert" in url.query:
+                env["PGSSLCERT"] = url.query["sslcert"]
+            if "sslkey" in url.query:
+                env["PGSSLKEY"] = url.query["sslkey"]
+
         logger.info(f"[Backup] Executing pg_dump to {archive_path}...")
-        res = subprocess.run(cmd, capture_output=True, text=True)
+        res = subprocess.run(cmd, capture_output=True, text=True, env=env)
         if res.returncode != 0:
             raise RuntimeError(f"pg_dump failed with exit code {res.returncode}: {res.stderr}")
 

@@ -25,8 +25,8 @@ services:
 
   frontend:
     build:
-      context: ../frontend
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: frontend/Dockerfile
     container_name: samanvay-frontend
     restart: always
     expose:
@@ -42,7 +42,7 @@ services:
 
   backend:
     build:
-      context: ..
+      context: ../..
       dockerfile: backend/Dockerfile
     container_name: samanvay-backend
     restart: always
@@ -79,21 +79,31 @@ services:
 
   worker:
     build:
-      context: ..
+      context: ../..
       dockerfile: backend/Dockerfile
     container_name: samanvay-worker
-    command: ["python", "infrastructure/scripts/worker.py"]
+    entrypoint: ["python", "infrastructure/scripts/worker.py"]
     restart: always
     environment:
       - APP_ENV=production
+      - DEBUG=false
+      - SEED_SYNTHETIC_DATA=false
+      - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=postgresql://${POSTGRES_USER:-samanvay_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-samanvay_prod}
       - BACKGROUND_WORKER_HEARTBEAT_PATH=/app/runtime/worker.heartbeat
-      - WORKER_INTERVAL_SECONDS=${WORKER_INTERVAL_SECONDS:-60}
+      - ALERT_SCHEDULER_INTERVAL_SECONDS=${ALERT_SCHEDULER_INTERVAL_SECONDS:-300}
+      - FAILED_DELIVERY_RETRY_INTERVAL_SECONDS=${FAILED_DELIVERY_RETRY_INTERVAL_SECONDS:-600}
       - LOG_FORMAT=json
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
       - worker_runtime:/app/runtime
       - evidence_storage:/app/storage/evidence:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json, time, os, sys; p='/app/runtime/worker.heartbeat'; sys.exit(0 if (os.path.exists(p) and json.load(open(p)).get('status')=='running' and (time.time() - os.path.getmtime(p) < 900)) else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
       postgres:
         condition: service_healthy

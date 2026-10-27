@@ -23,7 +23,7 @@ def get_alembic_config() -> Config:
     ini_path = os.path.join(root_dir, "backend", "alembic.ini")
     cfg = Config(ini_path)
     cfg.set_main_option("script_location", os.path.join(root_dir, "backend", "alembic"))
-    cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+    cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("%", "%%"))
     return cfg
 
 
@@ -74,11 +74,18 @@ def main():
     parser = argparse.ArgumentParser(description="SAMANVAY Database Migration Management Tool")
     parser.add_argument("action", choices=["upgrade", "downgrade", "current", "history"], default="upgrade", nargs="?",
                         help="Action to execute: upgrade (default), downgrade, current, history")
-    parser.add_argument("--revision", default="head", help="Target revision (default: head for upgrade, -1 for downgrade)")
+    parser.add_argument("revision", nargs="?", default=None,
+                        help="Target revision (positional, default: head for upgrade, -1 for downgrade)")
+    parser.add_argument("--revision", dest="revision_opt", default=None,
+                        help="Target revision option flag")
     parser.add_argument("--sql", action="store_true", help="Dry-run SQL output mode (does not modify database)")
     args = parser.parse_args()
 
-    run_migration(action=args.action, revision=args.revision, sql_mode=args.sql)
+    rev = args.revision or args.revision_opt
+    if not rev:
+        rev = "head" if args.action == "upgrade" else ("-1" if args.action == "downgrade" else "head")
+
+    run_migration(action=args.action, revision=rev, sql_mode=args.sql)
 
 
 if __name__ == "__main__":

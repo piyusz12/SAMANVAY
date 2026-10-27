@@ -4,7 +4,7 @@
 # =====================================================================
 
 # Stage 1: Build stage with compilation tools
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim-bookworm AS builder
 
 WORKDIR /build
 
@@ -20,14 +20,25 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 
 # Stage 2: Minimal hardened production runtime
-FROM python:3.11-slim AS runner
+FROM python:3.11-slim-bookworm AS runner
 
 WORKDIR /app
 
-# Install minimal runtime dependencies (libpq for postgresql, curl for healthcheck)
+# Install minimal runtime dependencies (PostgreSQL 16 client matching DB server, curl for healthcheck)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
     curl \
+    ca-certificates \
+    gnupg \
+    && mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg \
+    && . /etc/os-release \
+    && echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        libpq5 \
+        postgresql-client-16 \
+    && apt-get purge -y gnupg \
+    && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create unprivileged application user

@@ -29,7 +29,7 @@ def calculate_sha256(filepath: str) -> str:
     return sha.hexdigest()
 
 
-def restore_database(backup_archive_path: str, target_db_url: str = None) -> dict:
+def restore_database(backup_archive_path: str, target_db_url: str = None, allow_unverified: bool = False) -> dict:
     """
     Restores database from a verified backup archive.
     Performs pre-restore checksum validation and post-restore integrity check.
@@ -48,6 +48,8 @@ def restore_database(backup_archive_path: str, target_db_url: str = None) -> dic
 
     # 1. Pre-restore cryptographic integrity verification
     computed_hash = calculate_sha256(backup_archive_path)
+    if not expected_hash and not allow_unverified:
+        raise ValueError("[RESTORE ABORTED] No checksum metadata found for archive; refusing unverified restore.")
     if expected_hash and computed_hash != expected_hash:
         raise ValueError(
             f"[RESTORE ABORTED] Checksum mismatch! Archive may be corrupted or tampered.\n"
@@ -76,8 +78,33 @@ def restore_database(backup_archive_path: str, target_db_url: str = None) -> dic
 
     else:
         logger.info(f"[Restore] Restoring PostgreSQL database from {backup_archive_path}...")
-        cmd = ["pg_restore", "--clean", "--if-exists", "--no-owner", "-d", active_db_url, backup_archive_path]
-        res = subprocess.run(cmd, capture_output=True, text=True)
+        from sqlalchemy.engine import make_url
+        url = make_url(active_db_url)
+        cmd = ["pg_restore", "--clean", "--if-exists", "--no-owner"]
+        if url.host:
+            cmd.extend(["-h", url.host])
+        if url.port:
+            cmd.extend(["-p", str(url.port)])
+        if url.username:
+            cmd.extend(["-U", url.username])
+        if url.database:
+            cmd.extend(["-d", url.database])
+        cmd.append(backup_archive_path)
+
+        env = os.environ.copy()
+        if url.password:
+            env["PGPASSWORD"] = url.password
+        if url.query:
+            if "sslmode" in url.query:
+                env["PGSSLMODE"] = url.query["sslmode"]
+            if "sslrootcert" in url.query:
+                env["PGSSLROOTCERT"] = url.query["sslrootcert"]
+            if "sslcert" in url.query:
+                env["PGSSLCERT"] = url.query["sslcert"]
+            if "sslkey" in url.query:
+                env["PGSSLKEY"] = url.query["sslkey"]
+
+        res = subprocess.run(cmd, capture_output=True, text=True, env=env)
         # Note: pg_restore returns 0 on success, or 1 with benign warnings
         if res.returncode not in (0, 1):
             raise RuntimeError(f"pg_restore failed with code {res.returncode}: {res.stderr}")
@@ -100,9 +127,10 @@ def main():
     parser = argparse.ArgumentParser(description="SAMANVAY Database Restoration Tool")
     parser.add_argument("archive", help="Path to database backup archive (.db or .dump)")
     parser.add_argument("--db-url", default=None, help="Optional target database URL")
+    parser.add_argument("--allow-unverified", action="store_true", help="Allow restore if metadata checksum file is missing")
     args = parser.parse_args()
 
-    result = restore_database(args.archive, args.db_url)
+    result = restore_database(args.archive, args.db_url, allow_unverified=args.allow_unverified)
     print(json.dumps(result, indent=2))
 
 

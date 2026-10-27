@@ -1,10 +1,12 @@
+import re
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, func
 from backend.app.models.complaint import Complaint
 from backend.app.models.institution import Institution
 from backend.app.models.case_linkage import CaseLinkage
 from backend.app.models.user import User
+from backend.app.api.deps import normalize_role
 from backend.app.core.datetime_util import utc_now
 from backend.app.services.overlap_engine import (
     run_staged_overlap_evaluation,
@@ -74,10 +76,94 @@ def calculate_explainable_similarity(
     for kw in keywords[:4]:
         anchor_conditions.append(Complaint.subject.ilike(f"%{kw}%"))
 
-    candidate_query = base_query.filter(or_(*anchor_conditions)).options(
-        joinedload(Complaint.institution)
+    # (a) Direct case references: prioritize explicit mentions of complaint numbers
+    # Supports slash-separated official format (e.g. AICTE/PGRC/2026/0001) and dash-separated format (e.g. CMP-2024-...)
+    # Bounded to 20 reference tokens and 20 query results to prevent unbounded IN queries
+    raw_refs = re.findall(r'\b(?:AICTE|CMP|GRV|CASE)[-_/A-Za-z0-9]+\b', f"{subject} {description}", re.IGNORECASE)
+    ref_numbers = list(set(r.strip("/.-_") for r in raw_refs if len(r.strip("/.-_")) >= 4))[:20]
+    direct_refs = []
+    direct_ref_ids = set()
+    if ref_numbers:
+        normalized_refs = [r.upper() for r in ref_numbers]
+        direct_refs = (
+            base_query.filter(func.upper(Complaint.complaint_no).in_(normalized_refs))
+            .options(joinedload(Complaint.institution))
+            .limit(20)
+            .all()
+        )
+        direct_ref_ids = {c.id for c in direct_refs}
+
+    # Separate substantive keyword text conditions from category conditions
+    keyword_conditions = [Complaint.subject.ilike(f"%{kw}%") for kw in keywords[:4]]
+    category_condition = Complaint.category.in_(related_categories) if related_categories else None
+
+    same_inst_query = base_query.filter(Complaint.institution_id == institution_id)
+
+    # (b1) Substantive keyword/subject text matches across same-institution history:
+    # Guaranteed candidate allocation for stronger text matches and historical exact duplicates,
+    # regardless of high category case volume or recency limits
+    same_inst_text_matches = []
+    if keyword_conditions:
+        same_inst_text_matches = (
+            same_inst_query.filter(or_(*keyword_conditions))
+            .options(joinedload(Complaint.institution))
+            .order_by(Complaint.created_at.desc())
+            .limit(100)
+            .all()
+        )
+
+    # (b2) Related category matches within the same institution
+    text_match_ids = {c.id for c in same_inst_text_matches}
+    same_inst_category = []
+    if category_condition is not None:
+        same_inst_category = (
+            same_inst_query.filter(category_condition, ~Complaint.id.in_(text_match_ids))
+            .options(joinedload(Complaint.institution))
+            .order_by(Complaint.created_at.desc())
+            .limit(100)
+            .all()
+        )
+
+    # (b3) Fill remaining same-institution budget with recent complaints
+    covered_same_inst_ids = text_match_ids | {c.id for c in same_inst_category}
+    same_inst_recent = (
+        same_inst_query.filter(~Complaint.id.in_(covered_same_inst_ids))
+        .options(joinedload(Complaint.institution))
+        .order_by(Complaint.created_at.desc())
+        .limit(50)
+        .all()
     )
-    candidates = candidate_query.limit(200).all()
+
+    # (c) Relevant anchors across other institutions:
+    # Text keyword matches prioritized first, followed by category matches with an expanded budget
+    cross_inst_query = base_query.filter(Complaint.institution_id != institution_id)
+    cross_inst_text = []
+    if keyword_conditions:
+        cross_inst_text = (
+            cross_inst_query.filter(or_(*keyword_conditions))
+            .options(joinedload(Complaint.institution))
+            .order_by(Complaint.created_at.desc())
+            .limit(50)
+            .all()
+        )
+    cross_text_ids = {c.id for c in cross_inst_text}
+    cross_inst_category = []
+    if category_condition is not None:
+        cross_inst_category = (
+            cross_inst_query.filter(category_condition, ~Complaint.id.in_(cross_text_ids))
+            .options(joinedload(Complaint.institution))
+            .order_by(Complaint.created_at.desc())
+            .limit(150)
+            .all()
+        )
+
+    # Combine in strict priority order with deduplication: direct refs -> same-inst text -> same-inst category -> same-inst recent -> cross-inst text -> cross-inst category
+    candidates = []
+    seen_ids = set()
+    for candidate in (direct_refs + same_inst_text_matches + same_inst_category + same_inst_recent + cross_inst_text + cross_inst_category):
+        if candidate.id not in seen_ids:
+            seen_ids.add(candidate.id)
+            candidates.append(candidate)
 
     # If anchor pool is small, supplement with recent active complaints to guarantee zero false negatives
     if len(candidates) < 40:
@@ -124,6 +210,16 @@ def calculate_explainable_similarity(
 
     for candidate in candidates:
         target_inst = candidate.institution
+        # Apply disclosure controls to direct-reference matches when cross-bureau or unauthenticated
+        if candidate.id in direct_ref_ids:
+            if current_user is None:
+                # Do not disclose cross-bureau case existence or similarity score to unauthenticated callers
+                continue
+            user_role = normalize_role(current_user.role)
+            if user_role not in ["SUPER_ADMIN", "AUDITOR"] and candidate.bureau != current_user.bureau:
+                # Cross-bureau access denied for desk officers of different bureaus
+                continue
+
         eval_result = run_staged_overlap_evaluation(
             source=source_complaint,
             target=candidate,

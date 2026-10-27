@@ -28,18 +28,7 @@ if (Get-Command openssl -ErrorAction SilentlyContinue) {
     Write-Host "  Certificate: $CrtPath"
     Write-Host "  Private Key: $KeyPath"
 } else {
-    Write-Host "[WARN] openssl not found in PATH. Generating via PowerShell New-SelfSignedCertificate..."
-    $cert = New-SelfSignedCertificate -DnsName "localhost", "samanvay.local", "127.0.0.1" -CertStoreLocation "Cert:\CurrentUser\My" -NotAfter (Get-Date).AddYears(1)
-    
-    # Export certificate public key (PEM)
-    $certBytes = $cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert)
-    $certB64 = [System.Convert]::ToBase64String($certBytes, [System.Base64FormattingOptions]::InsertLineBreaks)
-    $pemCert = "-----BEGIN CERTIFICATE-----`r`n$certB64`r`n-----END CERTIFICATE-----`r`n"
-    [System.IO.File]::WriteAllText($CrtPath, $pemCert)
-    
-    # Create empty key placeholder with notice if openssl is unavailable
-    if (-not (Test-Path $KeyPath)) {
-        [System.IO.File]::WriteAllText($KeyPath, "# Windows Certificate Store Thumbprint: $($cert.Thumbprint)`r`n")
-    }
-    Write-Host "[SUCCESS] Generated self-signed certificate: $CrtPath"
+    # OpenSSL is required to export an unencrypted PEM private key for Nginx
+    throw "OpenSSL is required to export an unencrypted PEM private key for Nginx. Please install OpenSSL (via choco install openssl or Git for Windows) and run this script again."
 }
+

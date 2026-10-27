@@ -187,16 +187,17 @@ def list_complaints(
     # Filter overdue at the SQL layer if requested
     if is_overdue is not None:
         now = utc_now()
+        terminal_statuses = ["DISPOSED", "RESOLVED", "REJECTED"]
         if is_overdue:
             query = query.filter(
                 Complaint.sla_due_date.isnot(None),
                 Complaint.sla_due_date < now,
-                ~Complaint.status.in_(["DISPOSED", "RESOLVED"])
+                ~Complaint.status.in_(terminal_statuses)
             )
         else:
             query = query.filter(
                 or_(
-                    Complaint.status.in_(["DISPOSED", "RESOLVED"]),
+                    Complaint.status.in_(terminal_statuses),
                     Complaint.sla_due_date.is_(None),
                     Complaint.sla_due_date >= now
                 )

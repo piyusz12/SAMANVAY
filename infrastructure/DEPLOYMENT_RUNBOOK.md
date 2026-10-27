@@ -252,8 +252,8 @@ The background daemon (`infrastructure/scripts/worker.py`) executes:
 - Delivery retries for transient notification failures.
 
 ### 7.1 Supervision & Liveness
-- The worker emits a heartbeat JSON file (`storage/worker_heartbeat.json`) after each cycle.
-- The `/health/metrics` endpoint monitors this heartbeat and alerts if the worker has stopped reporting.
+- The worker emits a heartbeat JSON file (`/app/runtime/worker.heartbeat`) after each cycle.
+- The `/health/metrics` endpoint monitors this heartbeat and alerts if the worker has stopped reporting or is stale.
 - The worker traps `SIGTERM` and `SIGINT` to safely drain ongoing transactions before container termination.
 
 ### 7.2 On-Demand Execution (Single-Run Mode)
@@ -314,7 +314,7 @@ trivy image nginx:1.25-alpine --severity HIGH,CRITICAL
    ```
 2. Check last recorded heartbeat:
    ```bash
-   cat storage/worker_heartbeat.json
+   docker compose -f docker-compose.prod.yml exec worker cat /app/runtime/worker.heartbeat
    ```
 3. Restart worker container:
    ```bash

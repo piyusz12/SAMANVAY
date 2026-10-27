@@ -17,10 +17,10 @@ pool_kwargs = {
 if settings.DATABASE_URL.startswith("sqlite"):
     connect_args = {"check_same_thread": False, "timeout": 30.0}
 else:
-    # Production PostgreSQL connection pool settings
+    # Production PostgreSQL connection pool settings (sized for multi-worker concurrency)
     pool_kwargs.update({
-        "pool_size": 25,
-        "max_overflow": 15,
+        "pool_size": 8,
+        "max_overflow": 4,
         "pool_recycle": 1800,  # Recycle connections after 30 mins
         "pool_timeout": 30     # Max wait time for a connection
     })

@@ -79,6 +79,10 @@ def reset_database(db: Session):
 
 def seed_demo_dataset(db: Session, reset: bool = False):
     """Populates the complete SIH demonstration dataset."""
+    from backend.app.config import settings
+    if settings.APP_ENV == "production":
+        raise RuntimeError("Refusing to seed or reset demo data when APP_ENV=production.")
+
     if reset:
         reset_database(db)
     elif db.query(User).count() > 0:

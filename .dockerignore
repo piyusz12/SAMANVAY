@@ -24,3 +24,7 @@ storage/backups/*
 !.env.example
 !.env.production.example
 !.env.development.example
+infrastructure/nginx/certs/*
+!infrastructure/nginx/certs/README.md
+infrastructure/docker/nginx/certs/*
+!infrastructure/docker/nginx/certs/README.md

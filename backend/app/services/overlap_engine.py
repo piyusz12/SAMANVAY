@@ -287,9 +287,9 @@ def evaluate_stage4_semantic_similarity(
     if not s_clean or not t_clean:
         return {"score": 0.0, "reasons": []}
 
-    # Fast-path: Token pre-screening
-    s_tokens = set(re.findall(r'[a-zA-Z]{3,}', s_clean.lower())) - STOPWORDS
-    t_tokens = set(re.findall(r'[a-zA-Z]{3,}', t_clean.lower())) - STOPWORDS
+    # Fast-path: Token pre-screening with 5-char prefix stems to catch inflections (e.g. salary/salaries)
+    s_tokens = {w[:5] for w in re.findall(r'[a-zA-Z]{3,}', s_clean.lower()) if w not in STOPWORDS}
+    t_tokens = {w[:5] for w in re.findall(r'[a-zA-Z]{3,}', t_clean.lower()) if w not in STOPWORDS}
     common_tokens = s_tokens & t_tokens
 
     # If texts share zero domain tokens and are moderately long, word similarity is 0.0

@@ -22,12 +22,16 @@ sys.exit(1)
 "
 fi
 
+# Run an alternate command (e.g. background worker) when provided
+if [ "$#" -gt 0 ]; then
+  echo "[SAMANVAY Entrypoint] Executing custom container command: $*"
+  exec "$@"
+fi
+
 # 2. Apply database migrations safely
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
-  echo "[SAMANVAY Entrypoint] Running database migrations (alembic upgrade head)..."
-  python -m alembic upgrade head || {
-    echo "[SAMANVAY Entrypoint] Warning: Alembic upgrade encountered an issue. Tables will be verified at startup."
-  }
+  echo "[SAMANVAY Entrypoint] Running database migrations..."
+  python infrastructure/scripts/migrate.py upgrade
 fi
 
 # 3. Start production ASGI application server

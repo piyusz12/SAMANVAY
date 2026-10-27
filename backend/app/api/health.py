@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from backend.app.config import settings
+from backend.app.core.logging import logger
 from backend.app.core.db_check import validate_database_connection
 from backend.app.api.deps import get_db
 from backend.app.models.complaint import Complaint
@@ -75,7 +76,8 @@ def readiness_probe(response: Response, db: Session = Depends(get_db)):
     except Exception as e:
         storage_ok = False
         is_ready = False
-        checks["storage"] = {"status": "fail", "error": str(e)}
+        logger.error(f"Readiness storage check failed: {e}")
+        checks["storage"] = {"status": "fail"}
 
     # 3. Schema tables check
     schema_ok = True
@@ -85,7 +87,8 @@ def readiness_probe(response: Response, db: Session = Depends(get_db)):
     except Exception as e:
         schema_ok = False
         is_ready = False
-        checks["schema"] = {"status": "fail", "error": str(e)}
+        logger.error(f"Readiness schema check failed: {e}")
+        checks["schema"] = {"status": "fail"}
 
     if not is_ready:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
@@ -124,6 +127,14 @@ def operational_metrics(db: Session = Depends(get_db)):
                 hb_data = json.load(f)
                 last_heartbeat = hb_data.get("timestamp")
                 worker_status = hb_data.get("status", "running")
+                # Detect stale worker heartbeat (e.g. heartbeat older than 15 minutes / 900s)
+                if last_heartbeat and worker_status == "running":
+                    try:
+                        hb_time = datetime.fromisoformat(last_heartbeat.replace("Z", "+00:00"))
+                        if (datetime.now(timezone.utc) - hb_time).total_seconds() > 900:
+                            worker_status = "stale"
+                    except Exception:
+                        pass
         except Exception:
             worker_status = "heartbeat_error"
 
