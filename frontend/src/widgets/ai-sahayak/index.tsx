@@ -165,20 +165,20 @@ export const AicteSahayakWidget: React.FC<{
       {/* Floating Launcher Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full shadow-2xl shadow-blue-500/40 border border-blue-400/40 flex items-center gap-2.5 transition-all transform hover:scale-105 cursor-pointer font-semibold text-xs sm:text-sm"
+        className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40 sm:z-50 px-3.5 py-2.5 sm:px-4 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full shadow-2xl shadow-blue-500/40 border border-blue-400/40 flex items-center gap-2 transition-all transform hover:scale-105 cursor-pointer font-semibold text-xs sm:text-sm"
         aria-label="Open AICTE Sahayak Helpdesk"
       >
-        <span className="relative flex h-3 w-3">
+        <span className="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-400"></span>
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-emerald-400"></span>
         </span>
-        <Sparkles className="h-4 w-4" />
-        <span>AICTE Sahayak (24x7)</span>
+        <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+        <span className="text-xs sm:text-sm">AICTE Sahayak</span>
       </button>
 
       {/* Slide-over Chat Box */}
       {isOpen && (
-        <div className="fixed bottom-20 right-4 sm:right-6 w-[94vw] sm:w-96 max-h-[560px] h-[520px] bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden backdrop-blur-2xl">
+        <div className="fixed bottom-20 md:bottom-6 right-3 sm:right-6 w-[94vw] sm:w-96 max-h-[72vh] sm:max-h-[560px] h-[72vh] sm:h-[520px] bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden backdrop-blur-2xl">
           {/* Header */}
           <div className="p-4 bg-gradient-to-r from-blue-900/80 to-slate-900 border-b border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-2.5">

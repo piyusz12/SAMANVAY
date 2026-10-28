@@ -29,6 +29,13 @@ import { TransferFileModal } from '../features/transfer-file';
 import { ComplaintDetailModal } from '../features/complaint-detail';
 import { HealthStatusModal } from '../features/health-status';
 import { UnifiedSearchModal } from '../features/unified-search';
+import {
+  LayoutDashboard,
+  Compass,
+  PlusCircle,
+  Search,
+  Menu,
+} from 'lucide-react';
 
 export default function Home() {
   const {
@@ -47,6 +54,7 @@ export default function Home() {
   const [isPersonaOpen, setIsPersonaOpen] = useState(false);
   const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Active case / inspection states
   const [detailComplaintId, setDetailComplaintId] = useState<number | null>(null);
@@ -75,14 +83,18 @@ export default function Home() {
       } ${fontSize === 'large' ? 'text-[15px]' : fontSize === 'larger' ? 'text-[16px]' : 'text-sm'}`}
     >
       <div className="flex-1 flex">
-        {/* 1. Global Navigation Sidebar */}
-        <GlobalNavigationSidebar onOpenPersona={() => setIsPersonaOpen(true)} />
+        {/* 1. Global Navigation Sidebar (Responsive Desktop & Mobile Drawer) */}
+        <GlobalNavigationSidebar
+          isMobileOpen={isMobileMenuOpen}
+          onCloseMobile={() => setIsMobileMenuOpen(false)}
+          onOpenPersona={() => setIsPersonaOpen(true)}
+        />
 
         {/* 2. Main Content Canvas */}
         <div
-          className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
-            sidebarCollapsed ? 'ml-18' : 'ml-64'
-          }`}
+          className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ml-0 ${
+            sidebarCollapsed ? 'md:ml-18' : 'md:ml-64'
+          } pb-16 md:pb-0`}
         >
           {/* Header Bar */}
           <ExecutiveOverviewHeader
@@ -91,6 +103,7 @@ export default function Home() {
             onOpenPersona={() => setIsPersonaOpen(true)}
             onOpenSearch={() => setIsSearchOpen(true)}
             onOpenHealth={() => setIsHealthOpen(true)}
+            onToggleMobileMenu={() => setIsMobileMenuOpen((prev) => !prev)}
           />
 
           {/* Dynamic Page Views */}
@@ -153,6 +166,65 @@ export default function Home() {
           <PortalFooter />
         </div>
       </div>
+
+      {/* 4. Native-Style Mobile Bottom Navigation Bar (Smartphones < md) */}
+      <nav
+        aria-label="Mobile Navigation Bar"
+        className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-2xl border-t border-slate-800/90 py-1.5 px-3 md:hidden flex items-center justify-around shadow-2xl"
+      >
+        <button
+          type="button"
+          onClick={() => useAppStore.getState().setActiveTab('dashboard')}
+          className={`flex flex-col items-center gap-0.5 p-1 rounded-lg text-[10px] transition-colors cursor-pointer ${
+            activeTab === 'dashboard' ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <LayoutDashboard className="h-4 w-4" />
+          <span>Home</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setIsSearchOpen(true)}
+          className={`flex flex-col items-center gap-0.5 p-1 rounded-lg text-[10px] transition-colors cursor-pointer ${
+            isSearchOpen ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Compass className="h-4 w-4" />
+          <span>Colleges</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleOpenLodge(null)}
+          className="flex flex-col items-center justify-center -mt-4 bg-gradient-to-tr from-blue-600 to-indigo-500 hover:from-blue-500 hover:to-indigo-400 text-white rounded-full h-11 w-11 shadow-lg shadow-blue-500/40 border-2 border-slate-900 transition-transform active:scale-95 cursor-pointer"
+          aria-label="Lodge New Grievance"
+        >
+          <PlusCircle className="h-5 w-5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => useAppStore.getState().setActiveTab('track')}
+          className={`flex flex-col items-center gap-0.5 p-1 rounded-lg text-[10px] transition-colors cursor-pointer ${
+            activeTab === 'track' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Search className="h-4 w-4" />
+          <span>Track</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen(true)}
+          className={`flex flex-col items-center gap-0.5 p-1 rounded-lg text-[10px] transition-colors cursor-pointer ${
+            isMobileMenuOpen ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Menu className="h-4 w-4" />
+          <span>Menu</span>
+        </button>
+      </nav>
 
       {/* Floating 24x7 Helpdesk AI Assistant */}
       <AicteSahayakWidget

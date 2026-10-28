@@ -36,7 +36,7 @@ export const Modal: React.FC<ModalProps> = ({
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm animate-in fade-in-0 duration-200" />
         <DialogPrimitive.Content
           className={cn(
-            'fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-slate-700/80 bg-slate-900 p-6 shadow-2xl duration-200 animate-in fade-in-0 zoom-in-95 max-h-[90vh] overflow-y-auto focus:outline-none',
+            'fixed left-[50%] top-[50%] z-50 w-[94vw] sm:w-full translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-slate-700/80 bg-slate-900 p-4 sm:p-6 shadow-2xl duration-200 animate-in fade-in-0 zoom-in-95 max-h-[88vh] overflow-y-auto focus:outline-none',
             sizeClasses[size]
           )}
         >

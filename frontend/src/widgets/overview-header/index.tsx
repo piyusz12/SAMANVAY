@@ -22,6 +22,7 @@ import {
   VolumeX,
   HelpCircle,
   Eye,
+  Menu,
 } from 'lucide-react';
 
 export const ExecutiveOverviewHeader: React.FC<{
@@ -30,12 +31,14 @@ export const ExecutiveOverviewHeader: React.FC<{
   onOpenPersona: () => void;
   onOpenSearch: () => void;
   onOpenHealth: () => void;
+  onToggleMobileMenu?: () => void;
 }> = ({
   onOpenLodge,
   onOpenNotifications,
   onOpenPersona,
   onOpenSearch,
   onOpenHealth,
+  onToggleMobileMenu,
 }) => {
   const {
     isOnline,
@@ -217,22 +220,34 @@ export const ExecutiveOverviewHeader: React.FC<{
       </div>
 
       {/* 4. Main Executive Navigation Bar */}
-      <div className="h-16 px-4 sm:px-6 flex items-center justify-between gap-3 sm:gap-4">
+      <div className="h-16 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4">
+        {/* Mobile Navigation Drawer Toggle */}
+        {onToggleMobileMenu && (
+          <button
+            type="button"
+            onClick={onToggleMobileMenu}
+            className="md:hidden p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+            aria-label="Open Navigation Menu"
+          >
+            <Menu className="h-5 w-5 text-blue-400" />
+          </button>
+        )}
+
         {/* Global Search Bar (Trigger for Unified Search Palette) */}
-        <div className="relative max-w-sm sm:max-w-md w-full">
+        <div className="relative flex-1 max-w-sm sm:max-w-md">
           <button
             onClick={onOpenSearch}
-            className="w-full pl-10 pr-12 py-2 text-xs rounded-xl bg-slate-900/90 border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-left flex items-center transition-all cursor-pointer shadow-inner"
+            className="w-full pl-9 sm:pl-10 pr-4 sm:pr-12 py-2 text-xs rounded-xl bg-slate-900/90 border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-left flex items-center transition-all cursor-pointer shadow-inner"
             aria-label="Open Unified Search Modal"
           >
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+            <Search className="absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-slate-500" />
             <span className="truncate">
               {searchQuery ||
                 (userLocation
-                  ? `📍 Search colleges near ${userLocation.city}, AICTE ID, or cases...`
-                  : '📍 Search colleges near you, AICTE ID, or Complaint No...')}
+                  ? `📍 Colleges near ${userLocation.city}...`
+                  : '📍 Search colleges near you...')}
             </span>
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono bg-slate-800 border border-slate-700 rounded text-slate-400 shadow-sm">
+            <kbd className="hidden sm:inline-block absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono bg-slate-800 border border-slate-700 rounded text-slate-400 shadow-sm">
               ⌘K
             </kbd>
           </button>
@@ -269,7 +284,7 @@ export const ExecutiveOverviewHeader: React.FC<{
         </div>
 
         {/* Status Indicators & Actions */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Offline-First Sync Badge */}
           {isOnline ? (
             <Badge variant="emerald" size="sm" className="hidden lg:inline-flex items-center gap-1">

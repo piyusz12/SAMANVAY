@@ -144,7 +144,7 @@ export const ComplaintsPage: React.FC<{
           {/* Filter Chips Bar */}
           <Card className="p-3 bg-slate-900/60">
             <div className="flex items-center gap-3 flex-wrap">
-              <div className="w-48">
+              <div className="w-full sm:w-48">
                 <Select
                   value={bureauFilter}
                   onChange={(e) => {
@@ -163,7 +163,7 @@ export const ComplaintsPage: React.FC<{
                 </Select>
               </div>
 
-              <div className="w-44">
+              <div className="w-full sm:w-44">
                 <Select
                   value={statusFilter}
                   onChange={(e) => {

@@ -34,7 +34,7 @@ export const InstitutionsPage: React.FC<{
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Institution List with Search */}
-        <Card className="bg-slate-900/60 lg:col-span-1 h-[650px] flex flex-col">
+        <Card className="bg-slate-900/60 lg:col-span-1 h-[360px] lg:h-[650px] flex flex-col">
           <div className="p-3 border-b border-slate-800">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
@@ -85,7 +85,7 @@ export const InstitutionsPage: React.FC<{
         </Card>
 
         {/* Right: 360° Dossier View */}
-        <Card className="bg-slate-900/60 lg:col-span-2 h-[650px] flex flex-col">
+        <Card className="bg-slate-900/60 lg:col-span-2 min-h-[460px] lg:h-[650px] flex flex-col">
           {isDossierLoading ? (
             <div className="p-12 text-center text-xs text-slate-500">Loading 360° institutional dossier...</div>
           ) : !dossier ? (
