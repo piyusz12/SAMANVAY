@@ -6,24 +6,27 @@ export interface AuditLog {
   complaint_id?: number;
   institution_id?: number;
   actor_id?: number;
-  actor_email?: string;
-  actor_role?: string;
-  actor_bureau?: string;
+  actor_name: string;
+  actor_role: string;
+  actor_bureau: string;
   action_type: string;
-  narrative: string;
+  description: string;
   previous_state?: any;
   new_state?: any;
-  previous_hash?: string;
-  record_hash?: string;
-  created_at: string;
+  timestamp: string;
+  prev_hash?: string;
+  entry_hash?: string;
 }
 
 export interface ChainIntegrity {
   is_intact: boolean;
-  total_records_verified: number;
+  total_records: number;
   head_hash?: string;
-  broken_at_id?: number;
-  message: string;
+  tampered_entry_id?: number;
+  details: string;
+  violation_type?: string;
+  first_timestamp?: string;
+  latest_timestamp?: string;
 }
 
 export function useAuditLogs(complaintId?: number) {

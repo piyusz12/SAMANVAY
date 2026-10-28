@@ -21,6 +21,9 @@ import { PersonaSwitcherModal } from '../features/auth';
 import { OverlapReviewModal } from '../features/overlap-review';
 import { StatusTransitionModal } from '../features/status-transition';
 import { TransferFileModal } from '../features/transfer-file';
+import { ComplaintDetailModal } from '../features/complaint-detail';
+import { HealthStatusModal } from '../features/health-status';
+import { UnifiedSearchModal } from '../features/unified-search';
 
 export default function Home() {
   const {
@@ -34,7 +37,11 @@ export default function Home() {
   const [isLodgeOpen, setIsLodgeOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isPersonaOpen, setIsPersonaOpen] = useState(false);
+  const [isHealthOpen, setIsHealthOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  // Active case / inspection states
+  const [detailComplaintId, setDetailComplaintId] = useState<number | null>(null);
   const [overlapReviewData, setOverlapReviewData] = useState<{ id: number; no: string } | null>(null);
   const [statusTransitionComplaint, setStatusTransitionComplaint] = useState<any | null>(null);
   const [transferComplaint, setTransferComplaint] = useState<any | null>(null);
@@ -42,6 +49,10 @@ export default function Home() {
   const handleSelectInstitution = (id: number) => {
     setSelectedInstitutionId(id);
     useAppStore.getState().setActiveTab('institutions');
+  };
+
+  const handleSelectComplaint = (id: number) => {
+    setDetailComplaintId(id);
   };
 
   return (
@@ -60,6 +71,8 @@ export default function Home() {
           onOpenLodge={() => setIsLodgeOpen(true)}
           onOpenNotifications={() => setIsNotificationsOpen(true)}
           onOpenPersona={() => setIsPersonaOpen(true)}
+          onOpenSearch={() => setIsSearchOpen(true)}
+          onOpenHealth={() => setIsHealthOpen(true)}
         />
 
         {/* Dynamic Page Views */}
@@ -69,6 +82,7 @@ export default function Home() {
               onOpenLodge={() => setIsLodgeOpen(true)}
               onOpenOverlapReview={(id, no) => setOverlapReviewData({ id, no })}
               onSelectInstitution={handleSelectInstitution}
+              onSelectComplaint={handleSelectComplaint}
             />
           )}
 
@@ -78,6 +92,7 @@ export default function Home() {
               onOpenOverlapReview={(id, no) => setOverlapReviewData({ id, no })}
               onOpenTransition={(comp) => setStatusTransitionComplaint(comp)}
               onOpenTransfer={(comp) => setTransferComplaint(comp)}
+              onSelectComplaint={handleSelectComplaint}
             />
           )}
 
@@ -103,7 +118,7 @@ export default function Home() {
         </main>
       </div>
 
-      {/* Global Modals */}
+      {/* Global Modals & Drawers */}
       <LodgeComplaintModal
         isOpen={isLodgeOpen}
         onClose={() => setIsLodgeOpen(false)}
@@ -118,6 +133,38 @@ export default function Home() {
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
       />
+
+      <HealthStatusModal
+        isOpen={isHealthOpen}
+        onClose={() => setIsHealthOpen(false)}
+      />
+
+      <UnifiedSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onSelectComplaint={handleSelectComplaint}
+        onSelectInstitution={handleSelectInstitution}
+      />
+
+      {detailComplaintId !== null && (
+        <ComplaintDetailModal
+          isOpen={true}
+          onClose={() => setDetailComplaintId(null)}
+          complaintId={detailComplaintId}
+          onOpenTransition={(comp) => {
+            setDetailComplaintId(null);
+            setStatusTransitionComplaint(comp);
+          }}
+          onOpenTransfer={(comp) => {
+            setDetailComplaintId(null);
+            setTransferComplaint(comp);
+          }}
+          onOpenOverlapReview={(id, no) => {
+            setDetailComplaintId(null);
+            setOverlapReviewData({ id, no });
+          }}
+        />
+      )}
 
       {overlapReviewData && (
         <OverlapReviewModal

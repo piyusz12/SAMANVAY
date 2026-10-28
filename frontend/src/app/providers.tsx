@@ -18,10 +18,55 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
   );
 
-  const setOnlineStatus = useAppStore((s) => s.setOnlineStatus);
+  const { setOnlineStatus, token, setToken, currentUser } = useAppStore();
+
+  // Startup session initialization with race cancellation
+  useEffect(() => {
+    let isCurrent = true;
+    const targetEmail = currentUser?.email;
+    const initSession = async () => {
+      const demoPassword = process.env.NEXT_PUBLIC_DEMO_PASSWORD;
+      if (!token && targetEmail && demoPassword) {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: targetEmail,
+              password: demoPassword,
+            }),
+          });
+          if (res.ok && isCurrent) {
+            const data = await res.json();
+            // Accept token only if persona has not changed during request
+            if (data?.access_token && useAppStore.getState().currentUser?.email === targetEmail) {
+              setToken(data.access_token);
+            }
+          }
+        } catch {
+          // Backend offline or unreachable at startup; unauthenticated state preserved
+        }
+      }
+    };
+    initSession();
+    return () => {
+      isCurrent = false;
+    };
+  }, [token, currentUser?.email, setToken]);
+
+  // Clear stale cached queries and refetch when authenticated session or persona token changes
+  useEffect(() => {
+    if (token) {
+      queryClient.clear();
+      queryClient.invalidateQueries();
+    }
+  }, [token, queryClient]);
 
   useEffect(() => {
-    const handleOnline = () => setOnlineStatus(true);
+    const handleOnline = () => {
+      setOnlineStatus(true);
+      queryClient.invalidateQueries();
+    };
     const handleOffline = () => setOnlineStatus(false);
 
     window.addEventListener('online', handleOnline);
@@ -31,7 +76,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [setOnlineStatus]);
+  }, [setOnlineStatus, queryClient]);
 
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

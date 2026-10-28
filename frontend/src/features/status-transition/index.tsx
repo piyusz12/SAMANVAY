@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../shared/api/api-client';
 import { COMPLAINT_STATUSES } from '../../shared/config/constants';
@@ -18,6 +18,14 @@ export const StatusTransitionModal: React.FC<{
   const [newStatus, setNewStatus] = useState('');
   const [notes, setNotes] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setNewStatus('');
+      setNotes('');
+      setErrorMsg(null);
+    }
+  }, [isOpen, complaint?.id]);
 
   const mutation = useMutation({
     mutationFn: async () => {

@@ -46,8 +46,13 @@ export const BUREAUS: Record<string, BureauDef> = {
 
 export const COMPLAINT_STATUSES: Record<string, { label: string; color: string; step: number }> = {
   LODGED: { label: 'Lodged', color: 'slate', step: 1 },
+  RECEIVED: { label: 'Received / Lodged', color: 'slate', step: 1 },
   SCRUTINY_PENDING: { label: 'Scrutiny Pending', color: 'blue', step: 2 },
+  UNDER_REVIEW: { label: 'Under Review', color: 'blue', step: 2 },
   UNDER_INQUIRY: { label: 'Under Inquiry', color: 'indigo', step: 3 },
+  IN_PROGRESS: { label: 'In Progress', color: 'indigo', step: 3 },
+  AWAITING_INFORMATION: { label: 'Awaiting Information', color: 'amber', step: 3 },
+  SHOW_CAUSE_ISSUED: { label: 'Show Cause Issued', color: 'amber', step: 4 },
   SHOW_CAUSE: { label: 'Show Cause Issued', color: 'amber', step: 4 },
   HEARING_SCHEDULED: { label: 'Hearing Scheduled', color: 'purple', step: 5 },
   RESOLVED: { label: 'Resolved', color: 'emerald', step: 6 },
@@ -56,74 +61,78 @@ export const COMPLAINT_STATUSES: Record<string, { label: string; color: string; 
   ESCALATED: { label: 'Escalated', color: 'rose', step: 4 },
 };
 
-export const COMPLAINT_CATEGORIES = [
-  'Fee Extortion',
-  'Faculty Salary Withheld',
-  'Infrastructure Deficit',
-  'Unapproved Courses',
-  'Harassment & Ragging',
-  'Admission Fraud',
-  'Fake Faculty / Documents',
-  'Recognition & Affiliation Dispute',
-  'Withholding of Certificates',
-  'Governance Malpractice',
+export interface ComplaintCategoryDef {
+  code: string;
+  label: string;
+}
+
+export const COMPLAINT_CATEGORIES: ComplaintCategoryDef[] = [
+  { code: 'FEE_EXTORTION', label: 'Fee Extortion & Caution Money Withholding' },
+  { code: 'FACULTY_SALARY_WITHHELD', label: 'Faculty Salary Non-Payment / Delayed Disbursement' },
+  { code: 'INFRASTRUCTURE_DEFICIT', label: 'Infrastructure Deficit & Safety Hazards' },
+  { code: 'RECOGNITION_DISPUTE', label: 'Recognition & Court Litigation Disputes' },
+  { code: 'FAKE_DEGREES_DOCUMENTS', label: 'Fraudulent Ghost Faculty & Fake Documents' },
+  { code: 'UNAPPROVED_COURSES', label: 'Unapproved Programs / Excess Intake' },
+  { code: 'RAGGING_HARASSMENT', label: 'Ragging & Student Harassment' },
+  { code: 'ADMISSION_FRAUD', label: 'Admission Fraud / Capitation Fees' },
 ];
 
 export const DEMO_PERSONAS = [
   {
     role: 'SUPER_ADMIN',
-    name: 'Dr. Rajesh Sharma',
-    bureau: 'AICTE HQ',
+    name: 'Dr. Rajeshwar Sharma',
+    bureau: 'CENTRAL_ADMIN',
     email: 'admin@samanvay.aicte.gov.in',
-    designation: 'Member Secretary & Apex Administrator',
+    designation: 'Central System Administrator / AICTE HQ',
     avatar: '👨‍💼',
   },
   {
     role: 'CASE_OFFICER',
-    name: 'Amit Patel',
+    name: 'Pooja Hegde',
     bureau: 'PGRC',
     email: 'officer.pgrc@samanvay.aicte.gov.in',
-    designation: 'Senior Desk Officer — Grievance Cell',
+    designation: 'Grievance Redressal Officer — PGRC',
     avatar: '🧑‍💻',
   },
   {
     role: 'BUREAU_ADMIN',
-    name: 'Smt. Priya Sundaram',
+    name: 'Dr. Rameshwar Nath',
     bureau: 'APPROVAL_BUREAU',
     email: 'head.approval@samanvay.aicte.gov.in',
-    designation: 'Advisor & Bureau Head — Approval',
+    designation: 'Advisor & Head — Approval Bureau',
     avatar: '👩‍💼',
   },
   {
     role: 'CASE_OFFICER',
     name: 'Sunil Verma',
     bureau: 'REGULATION_BUREAU',
-    email: 'officer.regulation@samanvay.aicte.gov.in',
-    designation: 'Inspection Officer — Regulation',
+    email: 'officer.rb@samanvay.aicte.gov.in',
+    designation: 'Assistant Director / Scrutiny Officer',
     avatar: '👨‍🏫',
   },
   {
-    role: 'CASE_OFFICER',
-    name: 'Adv. Meenakshi Lekhi',
+    role: 'BUREAU_ADMIN',
+    name: 'Adv. S. K. Mukherjee',
     bureau: 'LEGAL_CELL',
-    email: 'officer.legal@samanvay.aicte.gov.in',
-    designation: 'Legal Officer — High Court Division',
+    email: 'head.legal@samanvay.aicte.gov.in',
+    designation: 'Legal Advisor & Head — Legal Cell',
     avatar: '⚖️',
   },
   {
-    role: 'CASE_OFFICER',
-    name: 'Vikramaditya Roy',
+    role: 'BUREAU_ADMIN',
+    name: 'Col. R. S. Rathore (Retd.)',
     bureau: 'VIGILANCE_CELL',
-    email: 'officer.vigilance@samanvay.aicte.gov.in',
-    designation: 'Chief Vigilance Investigator',
+    email: 'head.vigilance@samanvay.aicte.gov.in',
+    designation: 'Chief Vigilance Officer',
     avatar: '🕵️',
   },
   {
     role: 'AUDITOR',
-    name: 'CMA Arvind Kejriwal',
-    bureau: 'AICTE HQ',
+    name: 'Sh. N. K. Sinha',
+    bureau: 'CENTRAL_ADMIN',
     email: 'auditor@samanvay.aicte.gov.in',
-    designation: 'Central Regulatory Auditor (Read-Only)',
+    designation: 'Read-Only Compliance & Performance Auditor',
     avatar: '🔍',
   },
 ];
+

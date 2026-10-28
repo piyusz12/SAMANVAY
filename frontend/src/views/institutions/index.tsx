@@ -74,7 +74,7 @@ export const InstitutionsPage: React.FC<{
                     <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
                       <span>ID: {inst.aicte_permanent_id}</span>
                       <span>•</span>
-                      <span>{inst.city || 'New Delhi'}</span>
+                      <span>{inst.city || 'City not recorded'}</span>
                     </div>
                   </button>
                 );
@@ -105,11 +105,11 @@ export const InstitutionsPage: React.FC<{
                   <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
                     <span>AICTE Permanent ID: <strong className="text-white">{dossier.institution.aicte_permanent_id}</strong></span>
                     <span>•</span>
-                    <span>AISHE: <strong className="text-white">{dossier.institution.aishe_code || 'C-10928'}</strong></span>
+                    <span>AISHE: <strong className="text-white">{dossier.institution.aishe_code || 'Not recorded'}</strong></span>
                   </div>
                   <p className="text-xs text-slate-400 flex items-center gap-1 pt-1">
                     <MapPin className="h-3.5 w-3.5 text-slate-500" />
-                    {dossier.institution.address || 'Knowledge Park, Institutional Area, New Delhi'}
+                    {dossier.institution.address || 'Address not recorded'}
                   </p>
                 </div>
 
@@ -143,14 +143,15 @@ export const InstitutionsPage: React.FC<{
                   Departments Maintaining Active Jurisdictional Inquiries:
                 </h5>
                 <div className="flex gap-2 flex-wrap">
-                  {(dossier.involved_bureaus && dossier.involved_bureaus.length > 0
-                    ? dossier.involved_bureaus
-                    : ['PGRC', 'APPROVAL_BUREAU', 'LEGAL_CELL']
-                  ).map((b) => (
-                    <Badge key={b} variant="rose" size="md">
-                      🏛️ {b}
-                    </Badge>
-                  ))}
+                  {dossier.involved_bureaus && dossier.involved_bureaus.length > 0 ? (
+                    dossier.involved_bureaus.map((b) => (
+                      <Badge key={b} variant="rose" size="md">
+                        🏛️ {b}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-500">No active jurisdictional inquiries.</span>
+                  )}
                 </div>
               </div>
 

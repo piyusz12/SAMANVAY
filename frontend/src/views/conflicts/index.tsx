@@ -12,15 +12,9 @@ export const ConflictsPage: React.FC<{
   onOpenOverlapReview: (id: number, no: string) => void;
   onSelectInstitution: (id: number) => void;
 }> = ({ onOpenOverlapReview, onSelectInstitution }) => {
-  const { data: conflicts = [], isLoading } = useQuery<any[]>({
+  const { data: conflicts = [], isLoading, isError, refetch } = useQuery<any[]>({
     queryKey: ['conflicts', 'overlapping'],
-    queryFn: async () => {
-      try {
-        return await apiClient.get<any[]>('/api/v1/conflicts/overlapping');
-      } catch {
-        return [];
-      }
-    },
+    queryFn: () => apiClient.get<any[]>('/api/v1/conflicts/overlapping'),
     staleTime: 1000 * 30,
   });
 
@@ -38,6 +32,13 @@ export const ConflictsPage: React.FC<{
       <div className="space-y-3">
         {isLoading ? (
           <div className="p-12 text-center text-xs text-slate-500">Scanning across bureau registries...</div>
+        ) : isError ? (
+          <Card className="p-8 text-center bg-slate-900/60 border-rose-500/30">
+            <p className="text-sm text-rose-400 font-semibold mb-2">Unable to load conflict radar data</p>
+            <Button size="sm" variant="outline" onClick={() => refetch()}>
+              Retry Scan
+            </Button>
+          </Card>
         ) : conflicts.length === 0 ? (
           <Card className="p-12 text-center bg-slate-900/60">
             <Radar className="h-10 w-10 text-emerald-400 mx-auto mb-2" />
@@ -54,10 +55,10 @@ export const ConflictsPage: React.FC<{
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <Building2 className="h-4 w-4 text-rose-400" />
                     <h4 className="text-base font-bold text-white">
-                      {conf.institution_name || 'Delhi Institute of Technology & Management'}
+                      {conf.institution_name || 'Institution not recorded'}
                     </h4>
                     <span className="text-xs font-mono text-slate-400">
-                      ID: {conf.aicte_permanent_id || '1-99887766'}
+                      {conf.aicte_permanent_id ? `ID: ${conf.aicte_permanent_id}` : 'ID: Not recorded'}
                     </span>
                     <Badge variant="rose" size="sm">
                       ⚠️ Collision Alert
@@ -70,15 +71,17 @@ export const ConflictsPage: React.FC<{
 
                   <div className="flex items-center gap-2 pt-1 flex-wrap">
                     <span className="text-xs text-slate-400">Involved Bureaus:</span>
-                    {(conf.involved_bureaus || ['PGRC', 'APPROVAL_BUREAU', 'LEGAL_CELL']).map(
-                      (b: string) => (
+                    {conf.involved_bureaus && conf.involved_bureaus.length > 0 ? (
+                      conf.involved_bureaus.map((b: string) => (
                         <Badge key={b} variant="rose" size="sm">
                           {b}
                         </Badge>
-                      )
+                      ))
+                    ) : (
+                      <span className="text-xs text-slate-500">None specified</span>
                     )}
                     <span className="text-xs text-slate-400 ml-3">
-                      Total Active Cases: <strong className="text-white">{conf.total_active_complaints || 3}</strong>
+                      Total Active Cases: <strong className="text-white">{conf.total_active_complaints ?? 0}</strong>
                     </span>
                   </div>
                 </div>
@@ -87,14 +90,22 @@ export const ConflictsPage: React.FC<{
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => onSelectInstitution(conf.institution_id || 1)}
+                    disabled={!conf.institution_id}
+                    onClick={() => conf.institution_id && onSelectInstitution(conf.institution_id)}
                   >
                     Inspect Dossier
                   </Button>
                   <Button
                     size="sm"
                     variant="primary"
-                    onClick={() => onOpenOverlapReview(conf.sample_complaint_id || 1, 'AICTE/PGRC/2026/0001')}
+                    disabled={!conf.sample_complaint_id}
+                    onClick={() =>
+                      conf.sample_complaint_id &&
+                      onOpenOverlapReview(
+                        conf.sample_complaint_id,
+                        conf.sample_complaint_no || `Complaint #${conf.sample_complaint_id}`
+                      )
+                    }
                     leftIcon={<Sparkles className="h-3.5 w-3.5" />}
                   >
                     Review Overlap

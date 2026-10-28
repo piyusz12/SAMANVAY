@@ -9,13 +9,14 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../..
 import { Button } from '../../shared/ui/Button';
 import { Badge } from '../../shared/ui/Badge';
 import { formatDate } from '../../shared/lib/date-utils';
-import { FileText, ArrowRight, ShieldCheck, Sparkles, Building2 } from 'lucide-react';
+import { FileText, ArrowRight, Sparkles, Building2, Eye } from 'lucide-react';
 
 export const DashboardPage: React.FC<{
   onOpenLodge: () => void;
   onOpenOverlapReview: (id: number, no: string) => void;
   onSelectInstitution: (id: number) => void;
-}> = ({ onOpenLodge, onOpenOverlapReview, onSelectInstitution }) => {
+  onSelectComplaint?: (id: number) => void;
+}> = ({ onOpenLodge, onOpenOverlapReview, onSelectInstitution, onSelectComplaint }) => {
   const { setActiveTab } = useAppStore();
   const { data: complaintsData, isLoading } = useComplaints({ priority: undefined });
   const complaints = complaintsData?.items || [];
@@ -59,22 +60,34 @@ export const DashboardPage: React.FC<{
               {complaints.slice(0, 5).map((comp) => (
                 <div
                   key={comp.id}
-                  className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-slate-800/30 transition-colors"
+                  className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-slate-800/30 transition-colors group"
                 >
-                  <div className="space-y-1">
+                  <div
+                    className="space-y-1 cursor-pointer flex-1"
+                    onClick={() => onSelectComplaint && onSelectComplaint(comp.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && onSelectComplaint) onSelectComplaint(comp.id);
+                    }}
+                  >
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-bold text-white font-mono">{comp.complaint_no}</span>
+                      <span className="text-sm font-bold text-white font-mono group-hover:text-blue-400 transition-colors">
+                        {comp.complaint_no}
+                      </span>
                       <Badge variant="blue" size="sm">
-                        {comp.bureau_id}
+                        {comp.bureau || comp.bureau_id || 'AICTE'}
                       </Badge>
                       <ComplaintStatusBadge status={comp.status} size="sm" />
                       <SlaBadge createdAt={comp.created_at} dueDate={comp.sla_due_date} status={comp.status} size="sm" />
                     </div>
-                    <h5 className="text-xs font-semibold text-slate-200">{comp.subject}</h5>
+                    <h5 className="text-xs font-semibold text-slate-200 group-hover:text-blue-300 transition-colors">
+                      {comp.subject}
+                    </h5>
                     <div className="flex items-center gap-3 text-[11px] text-slate-400">
                       <span className="flex items-center gap-1">
                         <Building2 className="h-3 w-3 text-slate-500" />
-                        {comp.institution_name || 'Delhi Institute of Tech'}
+                        {comp.institution_name || 'Institution not recorded'}
                       </span>
                       <span>•</span>
                       <span>Category: {comp.category}</span>
@@ -84,6 +97,16 @@ export const DashboardPage: React.FC<{
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
+                    {onSelectComplaint && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onSelectComplaint(comp.id)}
+                        leftIcon={<Eye className="h-3.5 w-3.5 text-slate-400" />}
+                      >
+                        Inspect
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"

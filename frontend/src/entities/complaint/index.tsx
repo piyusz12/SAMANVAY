@@ -13,7 +13,9 @@ export interface Complaint {
   institution_id: number;
   institution_name?: string;
   aicte_permanent_id?: string;
-  bureau_id: string;
+  institution_aicte_id?: string;
+  bureau: string;
+  bureau_id?: string;
   assigned_officer_id?: number;
   assigned_officer_name?: string;
   complainant_name?: string;
@@ -35,6 +37,8 @@ export function useComplaints(filters?: {
   priority?: string;
   search?: string;
   institution_id?: number;
+  page?: number;
+  page_size?: number;
 }) {
   return useQuery<{ items: Complaint[]; total: number }>({
     queryKey: ['complaints', filters],
@@ -45,6 +49,8 @@ export function useComplaints(filters?: {
       if (filters?.priority) params.priority = filters.priority;
       if (filters?.search) params.search = filters.search;
       if (filters?.institution_id) params.institution_id = filters.institution_id;
+      if (filters?.page) params.page = filters.page;
+      if (filters?.page_size) params.page_size = filters.page_size;
 
       const res = await apiClient.get<any>('/api/v1/complaints', { params });
       if (Array.isArray(res)) {

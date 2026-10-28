@@ -52,11 +52,11 @@ export const AuditPage: React.FC = () => {
                     : 'Tamper Detected in Audit Chain'}
                 </h4>
                 <Badge variant={integrity.is_intact ? 'emerald' : 'rose'} size="sm">
-                  {integrity.total_records_verified} Blocks Verified
+                  {integrity.total_records ?? 0} Blocks Verified
                 </Badge>
               </div>
               <p className="text-xs text-slate-300">
-                {integrity.message || 'All sequential SHA-256 block hashes match their preceding block hash records.'}
+                {integrity.details || 'All sequential SHA-256 block hashes match their preceding block hash records.'}
               </p>
               {integrity.head_hash && (
                 <p className="text-[11px] font-mono text-slate-400 truncate">
@@ -86,37 +86,50 @@ export const AuditPage: React.FC = () => {
             <div className="p-12 text-center text-xs text-slate-500">No audit events recorded yet.</div>
           ) : (
             <div className="divide-y divide-slate-800/60 font-mono">
-              {logs.map((log) => (
-                <div key={log.id} className="p-4 space-y-2 hover:bg-slate-800/20 transition-colors">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-white font-sans">{log.action_type}</span>
-                      <Badge variant="blue" size="sm">
-                        {log.actor_bureau || 'AICTE'}
-                      </Badge>
-                      <span className="text-[11px] text-slate-400 font-sans">
-                        By: <strong className="text-slate-200">{log.actor_email || 'admin@samanvay.aicte.gov.in'}</strong> ({log.actor_role || 'SUPER_ADMIN'})
+              {logs.map((log) => {
+                const isGenesis = !log.prev_hash || log.prev_hash === '0'.repeat(64);
+                return (
+                  <div key={log.id} className="p-4 space-y-2 hover:bg-slate-800/20 transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-white font-sans">{log.action_type}</span>
+                        <Badge variant="blue" size="sm">
+                          {log.actor_bureau || 'AICTE'}
+                        </Badge>
+                        <span className="text-[11px] text-slate-400 font-sans">
+                          By: <strong className="text-slate-200">{log.actor_name || 'System / Unattributed'}</strong> ({log.actor_role || '—'})
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-500">
+                        {formatDateTime(log.timestamp)}
                       </span>
                     </div>
-                    <span className="text-[11px] text-slate-500">
-                      {formatDateTime(log.created_at)}
-                    </span>
-                  </div>
 
-                  <p className="text-xs text-slate-300 font-sans leading-relaxed">
-                    {log.narrative}
-                  </p>
+                    <p className="text-xs text-slate-300 font-sans leading-relaxed">
+                      {log.description}
+                    </p>
 
-                  <div className="pt-1.5 border-t border-slate-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] text-slate-500">
-                    <span className="truncate">
-                      Prev Hash: <span className="text-slate-400">{log.previous_hash ? log.previous_hash.substring(0, 24) + '...' : 'GENESIS_BLOCK_00000000'}</span>
-                    </span>
-                    <span className="truncate">
-                      Block Hash: <span className="text-emerald-400 font-bold">{log.record_hash ? log.record_hash.substring(0, 24) + '...' : 'SHA256_ACTIVE'}</span>
-                    </span>
+                    <div className="pt-1.5 border-t border-slate-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] text-slate-500">
+                      <span className="truncate">
+                        Prev Hash:{' '}
+                        <span className="text-slate-400">
+                          {isGenesis
+                            ? 'GENESIS_ANCHOR'
+                            : log.prev_hash
+                            ? log.prev_hash.substring(0, 24) + '...'
+                            : '—'}
+                        </span>
+                      </span>
+                      <span className="truncate">
+                        Entry Hash:{' '}
+                        <span className="text-emerald-400 font-bold">
+                          {log.entry_hash ? log.entry_hash.substring(0, 24) + '...' : '—'}
+                        </span>
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

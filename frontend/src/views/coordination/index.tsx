@@ -14,7 +14,7 @@ import { formatDate } from '../../shared/lib/date-utils';
 
 export const CoordinationPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const { data: workspaces = [], isLoading } = useWorkspaces();
+  const { data: workspaces = [], isLoading, isError, refetch } = useWorkspaces();
   const [activeWorkspaceModal, setActiveWorkspaceModal] = useState<any | null>(null);
 
   const [taskTitle, setTaskTitle] = useState('');
@@ -23,10 +23,11 @@ export const CoordinationPage: React.FC = () => {
 
   const addTaskMutation = useMutation({
     mutationFn: async () => {
-      return await apiClient.post(`/api/v1/coordination/workspaces/${activeWorkspaceModal.id}/tasks`, {
-        task_title: taskTitle.trim(),
-        assigned_to_bureau: taskBureau,
-        deadline: taskDeadline,
+      const linkageId = activeWorkspaceModal.linkage_id || activeWorkspaceModal.id;
+      return await apiClient.post(`/api/v1/coordination/workspaces/${linkageId}/tasks`, {
+        title: taskTitle.trim(),
+        target_bureau: taskBureau,
+        deadline: new Date(taskDeadline).toISOString(),
       });
     },
     onSuccess: () => {
@@ -52,6 +53,13 @@ export const CoordinationPage: React.FC = () => {
       <div className="space-y-4">
         {isLoading ? (
           <div className="p-12 text-center text-xs text-slate-500">Loading coordination workspaces...</div>
+        ) : isError ? (
+          <Card className="p-8 text-center bg-slate-900/60 border-rose-500/30">
+            <p className="text-sm text-rose-400 font-semibold mb-2">Unable to load coordination workspaces</p>
+            <Button size="sm" variant="outline" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </Card>
         ) : workspaces.length === 0 ? (
           <Card className="p-10 text-center bg-slate-900/60">
             <Users2 className="h-10 w-10 text-blue-400 mx-auto mb-2" />
@@ -62,22 +70,22 @@ export const CoordinationPage: React.FC = () => {
           </Card>
         ) : (
           workspaces.map((ws) => (
-            <Card key={ws.id} className="border-blue-500/30 bg-slate-900/60 p-5 space-y-4">
+            <Card key={ws.linkage_id || ws.id} className="border-blue-500/30 bg-slate-900/60 p-5 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3 border-b border-slate-800">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-bold text-white font-heading">
-                      {ws.institution_name || 'Delhi Institute of Technology & Management'}
+                      {ws.institution_name || 'Institution not recorded'}
                     </span>
                     <Badge variant="blue" size="sm">
-                      Lead: {ws.lead_bureau}
+                      Lead: {ws.lead_bureau || ws.source_bureau}
                     </Badge>
                     <Badge variant="purple" size="sm">
-                      Decision: {ws.coordination_decision || 'JOINT_INQUIRY'}
+                      Decision: {ws.coordination_decision || 'UNDER_REVIEW'}
                     </Badge>
                   </div>
                   <p className="text-xs text-slate-400 mt-1">
-                    {ws.decision_notes || 'Joint on-site physical scrutiny ordered across Approval Bureau and PGRC.'}
+                    {ws.coordination_notes || `Joint inquiry linking ${ws.source_bureau} and ${ws.target_bureau}.`}
                   </p>
                 </div>
 
@@ -94,7 +102,7 @@ export const CoordinationPage: React.FC = () => {
               {/* Tasks Checklist */}
               <div className="space-y-2">
                 <h5 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                  Coordinated Action Plan Tasks ({ws.tasks?.length || 0}):
+                  Coordinated Action Plan Tasks ({ws.tasks?.length || ws.outstanding_tasks_count || 0}):
                 </h5>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                   {(ws.tasks || []).map((t: FollowUpTask) => (
@@ -109,10 +117,10 @@ export const CoordinationPage: React.FC = () => {
                               t.status === 'COMPLETED' ? 'text-emerald-400' : 'text-slate-500'
                             }`}
                           />
-                          <span className="text-xs font-semibold text-white">{t.task_title}</span>
+                          <span className="text-xs font-semibold text-white">{t.title}</span>
                         </div>
                         <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
-                          <span>Bureau: {t.assigned_to_bureau}</span>
+                          <span>Bureau: {t.target_bureau || 'Assigned'}</span>
                           <span>•</span>
                           <span>Deadline: {formatDate(t.deadline)}</span>
                         </div>

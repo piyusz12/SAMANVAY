@@ -29,18 +29,14 @@ export const OverlapReviewModal: React.FC<OverlapReviewModalProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Fetch AI overlap candidates for this complaint
-  const { data: candidates = [], isLoading } = useQuery<any[]>({
+  const { data: candidates = [], isLoading, isError, refetch } = useQuery<any[]>({
     queryKey: ['overlap-candidates', complaintId],
     queryFn: async () => {
-      try {
-        const res = await apiClient.post<any[]>('/api/v1/similarity/check', {
-          complaint_id: complaintId,
-          limit: 5,
-        });
-        return res || [];
-      } catch {
-        return [];
-      }
+      const res = await apiClient.post<any[]>('/api/v1/similarity/check', {
+        complaint_id: complaintId,
+        limit: 5,
+      });
+      return res || [];
     },
     enabled: isOpen && !!complaintId,
   });
@@ -59,9 +55,9 @@ export const OverlapReviewModal: React.FC<OverlapReviewModalProps> = ({
         source_complaint_id: complaintId,
         target_complaint_id: targetComplaintId,
         link_type: linkType,
-        similarity_score: selectedCandidate?.similarity_score || 0.85,
-        explanation: selectedCandidate?.explanation || 'Verified cross-bureau overlap',
-        rationale: rationale.trim() || 'Officer confirmation: Concurrent active complaints across bureaus.',
+        similarity_score: selectedCandidate?.similarity_score,
+        explanation: selectedCandidate?.explanation,
+        rationale: rationale.trim(),
         status,
       });
     },
@@ -80,6 +76,10 @@ export const OverlapReviewModal: React.FC<OverlapReviewModalProps> = ({
   const handleDecision = (status: 'CONFIRMED_RELATED' | 'DISMISSED') => {
     if (!selectedCandidate) {
       setErrorMsg('Please select an overlap candidate to review.');
+      return;
+    }
+    if (!rationale.trim()) {
+      setErrorMsg('Officer review rationale is mandatory.');
       return;
     }
     setErrorMsg(null);
@@ -104,6 +104,15 @@ export const OverlapReviewModal: React.FC<OverlapReviewModalProps> = ({
           <div className="py-12 text-center text-slate-400">
             <Sparkles className="h-8 w-8 text-blue-400 animate-spin mx-auto mb-2" />
             <p className="text-sm">Scanning across all AICTE bureaus for institutional conflicts...</p>
+          </div>
+        ) : isError ? (
+          <div className="py-10 text-center text-slate-400 border border-rose-900/40 rounded-xl bg-rose-950/20">
+            <AlertTriangle className="h-8 w-8 text-rose-400 mx-auto mb-2" />
+            <p className="text-sm text-rose-300 font-semibold">Unable to run similarity analysis</p>
+            <p className="text-xs text-slate-400 mt-1 mb-3">Backend similarity service was unreachable.</p>
+            <Button size="sm" variant="outline" onClick={() => refetch()}>
+              Retry Analysis
+            </Button>
           </div>
         ) : candidates.length === 0 ? (
           <div className="py-10 text-center text-slate-400 border border-slate-800 rounded-xl bg-slate-950/40">

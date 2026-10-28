@@ -52,11 +52,7 @@ export function useOverlappingConflicts() {
   return useQuery<any[]>({
     queryKey: ['conflicts', 'overlapping'],
     queryFn: async () => {
-      try {
-        return await apiClient.get<any[]>('/api/v1/conflicts/overlapping');
-      } catch {
-        return [];
-      }
+      return await apiClient.get<any[]>('/api/v1/conflicts/overlapping');
     },
     staleTime: 1000 * 30,
   });

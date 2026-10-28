@@ -67,7 +67,7 @@ export const GlobalNavigationSidebar: React.FC<{ onOpenPersona: () => void }> = 
         </div>
 
         {/* Navigation Items */}
-        <nav className="p-3 space-y-1">
+        <nav className="p-3 space-y-1" aria-label="Main Navigation">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -75,6 +75,8 @@ export const GlobalNavigationSidebar: React.FC<{ onOpenPersona: () => void }> = 
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as any)}
+                aria-label={item.label}
+                aria-current={isActive ? 'page' : undefined}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25 border border-blue-400/30'
@@ -97,6 +99,7 @@ export const GlobalNavigationSidebar: React.FC<{ onOpenPersona: () => void }> = 
           className={`w-full p-2.5 rounded-xl border border-slate-800/80 bg-slate-900/50 hover:bg-slate-800/60 transition-colors text-left flex items-center gap-2.5 cursor-pointer ${
             sidebarCollapsed ? 'justify-center p-2' : ''
           }`}
+          aria-label="Switch User Persona"
           title="Switch Persona"
         >
           <span className="text-xl shrink-0">{currentUser.avatar}</span>

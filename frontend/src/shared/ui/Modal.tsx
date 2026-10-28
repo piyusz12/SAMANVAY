@@ -52,7 +52,6 @@ export const Modal: React.FC<ModalProps> = ({
               )}
             </div>
             <DialogPrimitive.Close
-              onClick={onClose}
               className="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 cursor-pointer"
               aria-label="Close modal"
             >

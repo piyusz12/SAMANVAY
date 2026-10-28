@@ -21,10 +21,10 @@ export const LodgeComplaintModal: React.FC<{ isOpen: boolean; onClose: () => voi
 
   const [formData, setFormData] = useState({
     institution_id: '',
-    bureau_id: currentUser.bureau !== 'AICTE HQ' ? currentUser.bureau : 'PGRC',
+    bureau: currentUser.bureau !== 'CENTRAL_ADMIN' && currentUser.bureau !== 'AICTE HQ' ? currentUser.bureau : 'PGRC',
     complainant_name: '',
     complainant_category: 'Student',
-    category: COMPLAINT_CATEGORIES[0],
+    category: COMPLAINT_CATEGORIES[0].code,
     subject: '',
     description: '',
     priority: 'HIGH',
@@ -40,11 +40,11 @@ export const LodgeComplaintModal: React.FC<{ isOpen: boolean; onClose: () => voi
     onMutate: async (newComplaint) => {
       await queryClient.cancelQueries({ queryKey: ['complaints'] });
       const previousComplaints = queryClient.getQueryData(['complaints']);
-      queryClient.setQueryData(['complaints'], (old: any) => {
+      queryClient.setQueriesData({ queryKey: ['complaints'] }, (old: any) => {
         const optimisticItem = {
           ...newComplaint,
           id: Date.now(),
-          complaint_no: `AICTE/${newComplaint.bureau_id}/2026/OPT-${Math.floor(Math.random() * 900 + 100)}`,
+          complaint_no: `AICTE/${newComplaint.bureau}/2026/OPT-${Math.floor(Math.random() * 900 + 100)}`,
           status: 'LODGED',
           created_at: new Date().toISOString(),
         };
@@ -58,7 +58,9 @@ export const LodgeComplaintModal: React.FC<{ isOpen: boolean; onClose: () => voi
       return { previousComplaints };
     },
     onError: (_err, _newComplaint, context: any) => {
-      if (context?.previousComplaints) {
+      if (context?.previousComplaints === undefined) {
+        queryClient.removeQueries({ queryKey: ['complaints'], exact: true });
+      } else {
         queryClient.setQueryData(['complaints'], context.previousComplaints);
       }
       setErrorMsg('Failed to lodge complaint. Please check your network or try again.');
@@ -119,8 +121,8 @@ export const LodgeComplaintModal: React.FC<{ isOpen: boolean; onClose: () => voi
 
           <Select
             label="Target AICTE Bureau *"
-            value={formData.bureau_id}
-            onChange={(e) => setFormData({ ...formData, bureau_id: e.target.value })}
+            value={formData.bureau}
+            onChange={(e) => setFormData({ ...formData, bureau: e.target.value })}
             required
           >
             {Object.values(BUREAUS).map((b) => (
@@ -158,8 +160,8 @@ export const LodgeComplaintModal: React.FC<{ isOpen: boolean; onClose: () => voi
             required
           >
             {COMPLAINT_CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
+              <option key={cat.code} value={cat.code}>
+                {cat.label}
               </option>
             ))}
           </Select>

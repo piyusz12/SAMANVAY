@@ -24,20 +24,9 @@ async function request<T = any>(endpoint: string, options: RequestOptions = {}):
   const { params, headers, ...restOptions } = options;
   const store = useAppStore.getState();
 
-  // If offline and making a state-mutating request, queue it
+  // If offline and making a state-mutating request, reject cleanly to prevent silent loss
   if (!store.isOnline && options.method && ['POST', 'PATCH', 'PUT', 'DELETE'].includes(options.method.toUpperCase())) {
-    store.queueOfflineAction({
-      type: `${options.method} ${endpoint}`,
-      endpoint,
-      method: options.method,
-      payload: options.body ? JSON.parse(options.body as string) : null,
-    });
-    // Return an optimistic success payload
-    return {
-      id: Math.floor(Math.random() * 100000),
-      _offline_queued: true,
-      status: 'QUEUED_OFFLINE',
-    } as unknown as T;
+    throw new ApiError(0, 'Network disconnected. Actions cannot be performed while offline.');
   }
 
   // Construct URL with query parameters
@@ -73,13 +62,27 @@ async function request<T = any>(endpoint: string, options: RequestOptions = {}):
     });
 
     if (!response.ok) {
-      let errorBody: any = null;
+      const rawText = await response.text();
+      let errorBody: any = rawText;
       try {
-        errorBody = await response.json();
+        errorBody = JSON.parse(rawText);
       } catch {
-        errorBody = await response.text();
+        // Keep raw text if not valid JSON
       }
-      const message = errorBody?.detail || errorBody?.message || `Request failed with status ${response.status}`;
+      const raw =
+        typeof errorBody === 'object' && errorBody !== null ? errorBody.detail || errorBody.message : undefined;
+      let message: string;
+      if (Array.isArray(raw)) {
+        message = raw
+          .map((d: any) => (d && typeof d === 'object' && d.msg ? d.msg : JSON.stringify(d)))
+          .join('; ');
+      } else if (typeof raw === 'string') {
+        message = raw;
+      } else if (raw) {
+        message = JSON.stringify(raw);
+      } else {
+        message = rawText || `Request failed with status ${response.status}`;
+      }
       throw new ApiError(response.status, message, errorBody);
     }
 

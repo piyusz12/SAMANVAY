@@ -15,25 +15,32 @@ export const PersonaSwitcherModal: React.FC<{ isOpen: boolean; onClose: () => vo
 }) => {
   const { currentUser, setCurrentUser, setToken } = useAppStore();
   const [loadingEmail, setLoadingEmail] = useState<string | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const handleSelectPersona = async (persona: UserPersona) => {
     setLoadingEmail(persona.email);
+    setLoginError(null);
+    const demoPassword = process.env.NEXT_PUBLIC_DEMO_PASSWORD;
+    if (!demoPassword) {
+      setLoginError('NEXT_PUBLIC_DEMO_PASSWORD is not configured in this environment.');
+      setLoadingEmail(null);
+      return;
+    }
     try {
-      // Call backend auth to retrieve real JWT token for this persona
       const res = await apiClient.post<{ access_token: string }>('/api/v1/auth/login', {
         email: persona.email,
-        password: 'Demo@AICTE2026!',
+        password: demoPassword,
       });
-      if (res?.access_token) {
-        setToken(res.access_token);
+      if (!res?.access_token) {
+        throw new Error('No access token returned by authentication service.');
       }
-    } catch {
-      // Offline fallback: set persona directly in client store
-      setToken('mock-jwt-token-dev');
-    } finally {
+      setToken(res.access_token);
       setCurrentUser(persona);
-      setLoadingEmail(null);
       onClose();
+    } catch (err: any) {
+      setLoginError(err?.message || 'Authentication failed. Please verify backend connection.');
+    } finally {
+      setLoadingEmail(null);
     }
   };
 
@@ -41,10 +48,15 @@ export const PersonaSwitcherModal: React.FC<{ isOpen: boolean; onClose: () => vo
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Switch Operational Persona & Bureau"
-      description="Select an AICTE officer identity to test role-based access control, bureau boundaries, and approval delegations."
+      title="Switch Operational Persona & Bureau (Evaluation Mode)"
+      description="Demo Environment Only: Select an AICTE officer identity to test role-based access control, bureau boundaries, and cross-departmental coordination. In production deployments, authentication delegates to institutional SSO / OAuth2."
       size="lg"
     >
+      {loginError && (
+        <div className="mb-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
+          ⚠️ {loginError}
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
         {DEMO_PERSONAS.map((p) => {
           const isCurrent = currentUser.email === p.email;

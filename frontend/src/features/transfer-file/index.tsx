@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../shared/api/api-client';
 import { BUREAUS } from '../../shared/config/constants';
@@ -12,18 +12,28 @@ import { Alert } from '../../shared/ui/Alert';
 export const TransferFileModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
-  complaint: { id: number; complaint_no: string; bureau_id: string };
+  complaint: { id: number; complaint_no: string; bureau?: string; bureau_id?: string };
 }> = ({ isOpen, onClose, complaint }) => {
   const queryClient = useQueryClient();
   const [toBureau, setToBureau] = useState('');
   const [reason, setReason] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const currentBureau = complaint.bureau || complaint.bureau_id || '';
+
+  useEffect(() => {
+    if (isOpen) {
+      setToBureau('');
+      setReason('');
+      setErrorMsg(null);
+    }
+  }, [isOpen, complaint?.id]);
+
   const mutation = useMutation({
     mutationFn: async () => {
-      return await apiClient.post('/api/v1/movements/transfer', {
-        complaint_id: complaint.id,
-        target_bureau_id: toBureau,
+      return await apiClient.post(`/api/v1/movements/complaint/${complaint.id}`, {
+        to_bureau: toBureau,
+        movement_type: 'TRANSFER_REQUEST',
         reason: reason.trim(),
       });
     },
@@ -44,7 +54,7 @@ export const TransferFileModal: React.FC<{
       setErrorMsg('Please select target recipient bureau.');
       return;
     }
-    if (toBureau === complaint.bureau_id) {
+    if (toBureau === currentBureau) {
       setErrorMsg('Target bureau cannot be identical to current holding bureau.');
       return;
     }
@@ -68,7 +78,7 @@ export const TransferFileModal: React.FC<{
         {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
 
         <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800 text-xs text-slate-300">
-          Current Custody: <strong className="text-white">{complaint.bureau_id}</strong>
+          Current Custody: <strong className="text-white">{currentBureau}</strong>
         </div>
 
         <Select
@@ -79,7 +89,7 @@ export const TransferFileModal: React.FC<{
         >
           <option value="">-- Select Recipient Bureau --</option>
           {Object.values(BUREAUS)
-            .filter((b) => b.id !== complaint.bureau_id)
+            .filter((b) => b.id !== currentBureau)
             .map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name} ({b.id})

@@ -1,6 +1,25 @@
 import type { Metadata } from 'next';
+import { Inter, Outfit, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'SAMANVAY — AICTE Integrated Complaint Monitoring Dashboard',
@@ -17,16 +36,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="bg-slate-950 text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
+    <html lang="en" className={`dark ${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}`}>
+      <body className="bg-slate-950 text-slate-100 antialiased selection:bg-blue-600 selection:text-white font-sans">
         <Providers>{children}</Providers>
       </body>
     </html>
