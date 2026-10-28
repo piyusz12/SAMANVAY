@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../shared/ui/Card';
 import { Badge } from '../../shared/ui/Badge';
 import { Button } from '../../shared/ui/Button';
+import { Modal } from '../../shared/ui/Modal';
 import { formatDate } from '../../shared/lib/date-utils';
 import { MOCK_COMPLAINTS } from '../../shared/api/mock-data';
 import {
@@ -19,6 +20,9 @@ import {
   ExternalLink,
   HelpCircle,
   Sparkles,
+  QrCode,
+  Stamp,
+  Download,
 } from 'lucide-react';
 
 export const TrackComplaintPage: React.FC<{
@@ -28,6 +32,7 @@ export const TrackComplaintPage: React.FC<{
   const [trackingInput, setTrackingInput] = useState('AICTE/PGRC/2026/0001');
   const [activeTrackingNo, setActiveTrackingNo] = useState('AICTE/PGRC/2026/0001');
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
 
   // Find complaint in mock complaints or default to first
   const complaint =
@@ -195,6 +200,14 @@ export const TrackComplaintPage: React.FC<{
               <Button
                 variant="outline"
                 size="sm"
+                leftIcon={<FileText className="h-4 w-4 text-blue-400" />}
+                onClick={() => setIsReceiptModalOpen(true)}
+              >
+                Official Receipt
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 leftIcon={<Printer className="h-4 w-4" />}
                 onClick={() => window.print()}
               >
@@ -345,6 +358,138 @@ export const TrackComplaintPage: React.FC<{
           </div>
         </CardContent>
       </Card>
+
+      {/* 3. Official Government Acknowledgment Receipt Modal */}
+      <Modal
+        isOpen={isReceiptModalOpen}
+        onClose={() => setIsReceiptModalOpen(false)}
+        title="Official Statutory Acknowledgment Receipt"
+        description="Government of India • Ministry of Education • AICTE SAMANVAY Central Inquiries Docket"
+        size="lg"
+      >
+        <div className="space-y-4 pt-2">
+          {/* Printable Receipt Paper Container */}
+          <div className="p-6 bg-slate-950 border border-slate-800 rounded-xl space-y-5 text-slate-200 relative overflow-hidden">
+            {/* Top Tricolor Accent Line */}
+            <div className="absolute top-0 left-0 right-0 h-1 flex">
+              <div className="flex-1 bg-[#FF9933]" />
+              <div className="flex-1 bg-white" />
+              <div className="flex-1 bg-[#138808]" />
+            </div>
+
+            {/* Official Header */}
+            <div className="text-center space-y-1 pb-3 border-b border-slate-800">
+              <div className="text-xl">🇮🇳</div>
+              <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">
+                Government of India • Ministry of Education
+              </p>
+              <h3 className="text-base font-bold text-white font-heading">
+                ALL INDIA COUNCIL FOR TECHNICAL EDUCATION
+              </h3>
+              <p className="text-[11px] text-blue-400 font-mono">
+                SAMANVAY Unified Grievance & Regulatory Compliance Intake
+              </p>
+            </div>
+
+            {/* Docket Summary */}
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-slate-500 block text-[10px] uppercase font-semibold">
+                  Docket Tracking Number
+                </span>
+                <span className="font-mono font-bold text-white text-sm">
+                  {complaint.complaint_no}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-slate-500 block text-[10px] uppercase font-semibold">
+                  Registration Date
+                </span>
+                <span className="font-mono text-slate-200">
+                  {formatDate(complaint.created_at)}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[10px] uppercase font-semibold">
+                  Allocated Custody Bureau
+                </span>
+                <span className="font-bold text-blue-300">
+                  {complaint.bureau}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-slate-500 block text-[10px] uppercase font-semibold">
+                  Statutory SLA Target
+                </span>
+                <span className="font-mono text-emerald-400 font-bold">
+                  {formatDate(complaint.sla_due_date)} (30 Days)
+                </span>
+              </div>
+            </div>
+
+            {/* Institution Under Scrutiny */}
+            <div className="p-3 bg-slate-900/80 rounded-lg border border-slate-800 text-xs space-y-1">
+              <span className="text-slate-500 text-[10px] uppercase font-semibold block">
+                Respondent Technical Institution
+              </span>
+              <p className="font-bold text-white">{complaint.institution_name}</p>
+              <p className="text-slate-400 font-mono text-[11px]">
+                AICTE Permanent ID: {complaint.aicte_permanent_id}
+              </p>
+            </div>
+
+            {/* Grievance Subject */}
+            <div className="text-xs space-y-1">
+              <span className="text-slate-500 text-[10px] uppercase font-semibold block">
+                Grievance Matter / Allegations
+              </span>
+              <p className="text-slate-300 font-medium">{complaint.subject}</p>
+            </div>
+
+            {/* Cryptographic Seal & Verification QR */}
+            <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5 text-emerald-400 font-semibold text-[11px]">
+                  <Stamp className="h-4 w-4" />
+                  <span>Digitally Certified by AICTE Central Intake Server</span>
+                </div>
+                <p className="text-[10px] font-mono text-slate-500">
+                  SHA-256: 4f89d32be91cb071e62a8731d94cf21a9
+                </p>
+              </div>
+
+              {/* QR Code Graphic Placeholder */}
+              <div className="p-1.5 bg-white rounded shadow-sm shrink-0">
+                <QrCode className="h-12 w-12 text-slate-950" />
+              </div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-[11px] text-slate-400">
+              Valid for legal submission and formal RTI inquiries.
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsReceiptModalOpen(false)}
+              >
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={<Printer className="h-4 w-4" />}
+                onClick={() => window.print()}
+              >
+                Print Receipt
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

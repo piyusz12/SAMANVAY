@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../shared/api/api-client';
+import { RegionalMapRadar } from '../../widgets/regional-map';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../shared/ui/Card';
 import { Button } from '../../shared/ui/Button';
 import { Badge } from '../../shared/ui/Badge';
@@ -260,6 +261,9 @@ export const AnalyticsPage: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Regional Office Geospatial Intelligence */}
+      <RegionalMapRadar />
     </div>
   );
 };

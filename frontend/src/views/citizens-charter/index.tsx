@@ -310,3 +310,4 @@ export const CitizensCharterPage: React.FC<{ onOpenLodge: () => void }> = ({ onO
     </div>
   );
 };
+

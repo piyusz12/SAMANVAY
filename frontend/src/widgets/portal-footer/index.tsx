@@ -191,3 +191,4 @@ export const PortalFooter: React.FC = () => {
     </footer>
   );
 };
+

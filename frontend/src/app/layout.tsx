@@ -25,6 +25,7 @@ export const metadata: Metadata = {
   title: 'SAMANVAY — AICTE Integrated Complaint Monitoring Dashboard',
   description:
     'Strategic cross-bureau coordination and monitoring platform for technical institutions across AICTE bureaus and cells.',
+  manifest: '/manifest.json',
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>",
   },

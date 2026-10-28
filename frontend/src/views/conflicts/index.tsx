@@ -3,6 +3,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../shared/api/api-client';
+import { RegionalMapRadar } from '../../widgets/regional-map';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../shared/ui/Card';
 import { Badge } from '../../shared/ui/Badge';
 import { Button } from '../../shared/ui/Button';
@@ -28,6 +29,9 @@ export const ConflictsPage: React.FC<{
           Automated multi-departmental collision detector. Prevents conflicting regulatory directives and uncoordinated on-site visits.
         </p>
       </div>
+
+      {/* Regional Office Geospatial Radar Map */}
+      <RegionalMapRadar />
 
       <div className="space-y-3">
         {isLoading ? (

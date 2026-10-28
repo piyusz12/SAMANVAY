@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../shared/api/api-client';
 import { useAppStore } from '../../shared/lib/store';
+import { VoiceReader } from '../../shared/lib/voice-reader';
 import { Button } from '../../shared/ui/Button';
 import { Badge } from '../../shared/ui/Badge';
 import {
@@ -18,6 +19,7 @@ import {
   Sparkles,
   PhoneCall,
   Volume2,
+  VolumeX,
   HelpCircle,
   Eye,
 } from 'lucide-react';
@@ -54,6 +56,7 @@ export const ExecutiveOverviewHeader: React.FC<{
   } = useAppStore();
 
   const [tickerIndex, setTickerIndex] = useState(0);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const tickerAlerts = [
     'Mandatory 30-Day Resolution Guarantee under AICTE Citizen’s Charter Active',
@@ -62,6 +65,23 @@ export const ExecutiveOverviewHeader: React.FC<{
     '⚖️ 100% Fee Refund Mandate within 15 Days of Admission Cancellation',
     '🏛️ Extension of Approval (EoA) Scrutiny Active across Western & Northern Regions',
   ];
+
+  const handleToggleSpeech = () => {
+    if (isSpeaking) {
+      VoiceReader.stop();
+      setIsSpeaking(false);
+    } else {
+      setIsSpeaking(true);
+      const activeAlert = tickerAlerts[tickerIndex];
+      const textToSpeak =
+        language === 'hi'
+          ? `समन्वय पोर्टल। अखिल भारतीय तकनीकी शिक्षा परिषद। सक्रिय सूचना: ${activeAlert}`
+          : `Welcome to SAMANVAY Portal. All India Council for Technical Education. Current statutory notice: ${activeAlert}`;
+      VoiceReader.speak(textToSpeak, language, () => {
+        setIsSpeaking(false);
+      });
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -140,6 +160,20 @@ export const ExecutiveOverviewHeader: React.FC<{
             title="Toggle High Contrast"
           >
             <Eye className="h-3 w-3" />
+          </button>
+
+          {/* Audio Speech Reader (Accessibility) */}
+          <button
+            onClick={handleToggleSpeech}
+            className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer ${
+              isSpeaking
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'
+                : 'text-slate-400 hover:text-white bg-slate-900 border border-slate-800'
+            }`}
+            title={isSpeaking ? 'Stop Audio Readout' : 'Audio Screen Reader (Web Speech)'}
+          >
+            {isSpeaking ? <VolumeX className="h-3 w-3 text-rose-400" /> : <Volume2 className="h-3 w-3 text-amber-400" />}
+            <span className="hidden sm:inline">{isSpeaking ? 'Stop' : (language === 'hi' ? 'सुनें' : 'Listen')}</span>
           </button>
 
           {/* Hindi / English Toggle */}
