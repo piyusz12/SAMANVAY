@@ -4,3 +4,4 @@ export * from './Card';
 export * from './FormControls';
 export * from './Modal';
 export * from './Alert';
+export * from './Logo';

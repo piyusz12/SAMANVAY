@@ -26,10 +26,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
       const urlParams = new URLSearchParams(window.location.search);
       const queryTheme = urlParams.get('theme');
       const saved = queryTheme || localStorage.getItem('samanvay-theme');
-      if (saved === 'light') {
-        useAppStore.getState().setTheme('light');
-      } else {
+      if (saved === 'dark') {
         useAppStore.getState().setTheme('dark');
+      } else {
+        useAppStore.getState().setTheme('light');
       }
     } catch {}
   }, []);

@@ -7,6 +7,7 @@ import { useAppStore } from '../../shared/lib/store';
 import { VoiceReader } from '../../shared/lib/voice-reader';
 import { Button } from '../../shared/ui/Button';
 import { Badge } from '../../shared/ui/Badge';
+import { SamanvayLogo } from '../../shared/ui/Logo';
 import {
   Bell,
   Wifi,
@@ -244,17 +245,20 @@ export const ExecutiveOverviewHeader: React.FC<{
 
       {/* 4. Main Executive Navigation Bar */}
       <div className="h-16 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4">
-        {/* Mobile Navigation Drawer Toggle */}
-        {onToggleMobileMenu && (
-          <button
-            type="button"
-            onClick={onToggleMobileMenu}
-            className="md:hidden p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
-            aria-label="Open Navigation Menu"
-          >
-            <Menu className="h-5 w-5 text-blue-400" />
-          </button>
-        )}
+        {/* Mobile Navigation Drawer Toggle & Brand Crest */}
+        <div className="md:hidden flex items-center gap-2 shrink-0">
+          {onToggleMobileMenu && (
+            <button
+              type="button"
+              onClick={onToggleMobileMenu}
+              className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+              aria-label="Open Navigation Menu"
+            >
+              <Menu className="h-5 w-5 text-blue-400" />
+            </button>
+          )}
+          <SamanvayLogo size="sm" showText={false} />
+        </div>
 
         {/* Global Search Bar (Trigger for Unified Search Palette) */}
         <div className="relative flex-1 max-w-sm sm:max-w-md">

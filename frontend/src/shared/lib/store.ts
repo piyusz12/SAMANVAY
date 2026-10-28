@@ -131,7 +131,7 @@ export const useAppStore = create<AppState>((set) => ({
   fontSize: 'normal',
   highContrast: false,
   language: 'en',
-  theme: 'dark', // Default is dark as requested
+  theme: 'light', // Default is light mode ("let white one be the first expression")
   userLocation: null,
   setUserLocation: (userLocation) => set({ userLocation }),
 

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useAppStore } from '../../shared/lib/store';
+import { SamanvayLogo } from '../../shared/ui/Logo';
 import {
   LayoutDashboard,
   FileText,
@@ -87,21 +88,9 @@ export const GlobalNavigationSidebar: React.FC<{
         <div className="flex-1 overflow-y-auto scrollbar-none">
           <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800/80 sticky top-0 bg-slate-950/95 z-10">
             {(!sidebarCollapsed || isMobileOpen) ? (
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-lg shadow-sm">
-                  ⚖️
-                </div>
-                <div>
-                  <h1 className="text-base font-extrabold text-white tracking-wider font-heading">
-                    SAMANVAY
-                  </h1>
-                  <span className="text-[10px] font-semibold text-blue-400 uppercase tracking-widest block -mt-0.5">
-                    AICTE National Portal
-                  </span>
-                </div>
-              </div>
+              <SamanvayLogo size="md" />
             ) : (
-              <div className="mx-auto text-xl">⚖️</div>
+              <SamanvayLogo size="sm" showText={false} className="mx-auto" />
             )}
 
             {/* Desktop Collapse / Mobile Close */}

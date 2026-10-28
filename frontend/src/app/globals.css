@@ -481,3 +481,31 @@ html.light footer {
 html.light footer .text-slate-400 {
   color: #475569 !important;
 }
+
+/* Samanvay Logo Branding Typography */
+html.light .samanvay-logo-title {
+  color: #0f172a !important;
+  font-weight: 900 !important;
+}
+html.dark .samanvay-logo-title {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+}
+
+html.light .samanvay-logo-sub {
+  color: #64748b !important;
+  font-weight: 700 !important;
+}
+html.dark .samanvay-logo-sub {
+  color: #94a3b8 !important;
+  font-weight: 700 !important;
+}
+
+html.light .samanvay-logo-badge {
+  color: #1d4ed8 !important;
+  font-weight: 700 !important;
+}
+html.dark .samanvay-logo-badge {
+  color: #60a5fa !important;
+  font-weight: 700 !important;
+}

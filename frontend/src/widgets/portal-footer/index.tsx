@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useAppStore } from '../../shared/lib/store';
+import { SamanvayLogo } from '../../shared/ui/Logo';
 import { Shield, Phone, Mail, MapPin, ExternalLink, Globe } from 'lucide-react';
 
 export const PortalFooter: React.FC = () => {
@@ -21,12 +22,7 @@ export const PortalFooter: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Col 1: About */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">⚖️</span>
-              <span className="font-extrabold text-white text-sm font-heading tracking-wide">
-                SAMANVAY (समन्वय)
-              </span>
-            </div>
+            <SamanvayLogo size="md" />
             <p className="text-slate-400 text-xs leading-relaxed">
               Integrated National Grievance Monitoring & Inter-Bureau Coordination Platform. Dismantling institutional silos across AICTE bureaus through automated conflict detection, 360° dossiers, and tamper-evident audit trails.
             </p>
