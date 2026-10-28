@@ -9,7 +9,18 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../..
 import { Button } from '../../shared/ui/Button';
 import { Badge } from '../../shared/ui/Badge';
 import { formatDate } from '../../shared/lib/date-utils';
-import { FileText, ArrowRight, Sparkles, Building2, Eye } from 'lucide-react';
+import {
+  FileText,
+  ArrowRight,
+  Sparkles,
+  Building2,
+  Eye,
+  Search,
+  Scale,
+  BookOpen,
+  Shield,
+  HelpCircle,
+} from 'lucide-react';
 
 export const DashboardPage: React.FC<{
   onOpenLodge: () => void;
@@ -21,15 +32,92 @@ export const DashboardPage: React.FC<{
   const { data: complaintsData, isLoading } = useComplaints({ priority: undefined });
   const complaints = complaintsData?.items || [];
 
+  const publicServices = [
+    {
+      title: 'Track Grievance Status',
+      desc: 'Enter your AICTE complaint tracking number to view real-time stage progress, assigned desk officer, and download official receipts.',
+      tab: 'track',
+      icon: Search,
+      color: 'text-blue-400',
+      border: 'hover:border-blue-500/50',
+      actionLabel: 'Track Now',
+    },
+    {
+      title: 'Citizen’s Charter & 30-Day SLA',
+      desc: 'Mandatory statutory resolution windows, student rights, whistleblower encryption, and 4-tier hierarchical escalation procedures.',
+      tab: 'charter',
+      icon: Scale,
+      color: 'text-amber-400',
+      border: 'hover:border-amber-500/50',
+      actionLabel: 'View Charter',
+    },
+    {
+      title: 'Fee Refund & Anti-Ragging Rules',
+      desc: 'Official gazette circulars mandating 100% fee refunds on cancellation and strict statutory prohibition against retaining original certificates.',
+      tab: 'circulars',
+      icon: BookOpen,
+      color: 'text-emerald-400',
+      border: 'hover:border-emerald-500/50',
+      actionLabel: 'Browse Circulars',
+    },
+    {
+      title: 'Technical Institutions 360°',
+      desc: 'Official registry of approved engineering, polytechnic, and management colleges across India with compliance records and active cells.',
+      tab: 'institutions',
+      icon: Building2,
+      color: 'text-indigo-400',
+      border: 'hover:border-indigo-500/50',
+      actionLabel: 'Inspect Directory',
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* 1. Key Metrics Overview */}
+      {/* 1. Citizen & Public Quick Services Hub */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {publicServices.map((svc, idx) => {
+          const Icon = svc.icon;
+          return (
+            <Card
+              key={idx}
+              className={`border-slate-800 bg-slate-900/60 p-4 transition-all duration-200 ${svc.border} flex flex-col justify-between`}
+            >
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className={`p-2 rounded-lg bg-slate-800/80 ${svc.color}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-500">Service {idx + 1}</span>
+                </div>
+                <h4 className="text-sm font-bold text-white">{svc.title}</h4>
+                <p className="text-xs text-slate-300 leading-relaxed line-clamp-3">
+                  {svc.desc}
+                </p>
+              </div>
+
+              <div className="pt-3 mt-3 border-t border-slate-800/80">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setActiveTab(svc.tab as any)}
+                  className="w-full justify-between"
+                  rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
+                >
+                  {svc.actionLabel}
+                </Button>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* 2. Key Metrics Overview */}
       <DepartmentMetricsBoard />
 
-      {/* 2. Conflict Radar Section */}
+      {/* 3. Conflict Radar Section */}
       <ConflictRadarWidget onSelectInstitution={onSelectInstitution} />
 
-      {/* 3. Recent Intake and Active Inquiries Grid */}
+      {/* 4. Recent Intake and Active Inquiries Grid */}
       <Card className="bg-slate-900/60">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <div>
