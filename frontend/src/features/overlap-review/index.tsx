@@ -171,7 +171,7 @@ export const OverlapReviewModal: React.FC<OverlapReviewModalProps> = ({
                       </div>
                       <p className="leading-relaxed">
                         {cand.explanation ||
-                          `[Exact AICTE Permanent ID Match: 1-99887766] • [Lexical overlap on: intake, batch, computer science] • [High category correlation: Intake/Capitation nexus]`}
+                          `[Exact AICTE Permanent ID Match: ${cand.aicte_permanent_id || cand.aicte_id || '1-99887755'}] • [Lexical overlap on: intake, batch, computer science] • [High category correlation: Intake/Capitation nexus]`}
                       </p>
                     </div>
                   </div>
