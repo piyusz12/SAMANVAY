@@ -51,6 +51,7 @@ export interface AppState {
     latitude: number;
     longitude: number;
     displayName: string;
+    accuracyMeters?: number;
     source: 'gps' | 'preset' | 'manual';
   } | null;
 
@@ -81,6 +82,7 @@ export interface AppState {
       latitude: number;
       longitude: number;
       displayName: string;
+      accuracyMeters?: number;
       source: 'gps' | 'preset' | 'manual';
     } | null
   ) => void;

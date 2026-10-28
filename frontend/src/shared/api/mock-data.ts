@@ -6,7 +6,7 @@
 export const MOCK_CONFLICTS = [
   {
     institution_id: 1,
-    institution_name: 'Apex Institute of Engineering & Technology [SYNTHETIC]',
+    institution_name: 'Apex Institute of Engineering & Technology',
     aicte_id: '1-10293847',
     aicte_permanent_id: '1-10293847',
     state: 'Maharashtra',
@@ -49,7 +49,7 @@ export const MOCK_CONFLICTS = [
   },
   {
     institution_id: 2,
-    institution_name: 'National Institute of Science & Technology [SYNTHETIC]',
+    institution_name: 'National Institute of Science & Technology',
     aicte_id: '1-28491022',
     aicte_permanent_id: '1-28491022',
     state: 'Karnataka',
@@ -83,7 +83,7 @@ export const MOCK_CONFLICTS = [
   },
   {
     institution_id: 3,
-    institution_name: 'Delhi Institute of Technology & Management [SYNTHETIC]',
+    institution_name: 'Delhi Institute of Technology & Management',
     aicte_id: '1-99887766',
     aicte_permanent_id: '1-99887766',
     state: 'Delhi',
@@ -138,7 +138,7 @@ export const MOCK_CONFLICTS = [
 export const MOCK_INSTITUTIONS = [
   {
     id: 1,
-    name: 'Apex Institute of Engineering & Technology [SYNTHETIC]',
+    name: 'Apex Institute of Engineering & Technology',
     aicte_permanent_id: '1-10293847',
     aishe_code: 'C-49102',
     address: 'Sector 12, Knowledge Park III, Navi Mumbai',
@@ -152,7 +152,7 @@ export const MOCK_INSTITUTIONS = [
   },
   {
     id: 2,
-    name: 'National Institute of Science & Technology [SYNTHETIC]',
+    name: 'National Institute of Science & Technology',
     aicte_permanent_id: '1-28491022',
     aishe_code: 'C-38291',
     address: 'Plot 45, Electronic City Phase 1, Bangalore',
@@ -166,7 +166,7 @@ export const MOCK_INSTITUTIONS = [
   },
   {
     id: 3,
-    name: 'Delhi Institute of Technology & Management [SYNTHETIC]',
+    name: 'Delhi Institute of Technology & Management',
     aicte_permanent_id: '1-99887766',
     aishe_code: 'C-27483',
     address: 'Institutional Area, Rohini Sector 22, New Delhi',
@@ -180,7 +180,7 @@ export const MOCK_INSTITUTIONS = [
   },
   {
     id: 4,
-    name: 'Kolkata Polytechnic Institute [SYNTHETIC]',
+    name: 'Kolkata Polytechnic Institute',
     aicte_permanent_id: '1-66554433',
     aishe_code: 'C-16572',
     address: 'Raja SC Mullick Road, Jadavpur, Kolkata',
@@ -194,7 +194,7 @@ export const MOCK_INSTITUTIONS = [
   },
   {
     id: 5,
-    name: 'Chennai Global Engineering College [SYNTHETIC]',
+    name: 'Chennai Global Engineering College',
     aicte_permanent_id: '1-55443322',
     aishe_code: 'C-05661',
     address: 'Rajiv Gandhi Salai (OMR), Karapakkam, Chennai',
@@ -208,7 +208,7 @@ export const MOCK_INSTITUTIONS = [
   },
   {
     id: 6,
-    name: 'Bhopal Institute of Science & Applied Tech [SYNTHETIC]',
+    name: 'Bhopal Institute of Science & Applied Tech',
     aicte_permanent_id: '1-44332211',
     aishe_code: 'C-94750',
     address: 'Airport Road, Gandhinagar, Bhopal',
@@ -227,7 +227,7 @@ export const MOCK_COMPLAINTS = [
     id: 1,
     complaint_no: 'AICTE/PGRC/2026/0001',
     institution_id: 1,
-    institution_name: 'Apex Institute of Engineering & Technology [SYNTHETIC]',
+    institution_name: 'Apex Institute of Engineering & Technology',
     aicte_permanent_id: '1-10293847',
     bureau: 'PGRC',
     category: 'FEE_EXTORTION',
@@ -247,7 +247,7 @@ export const MOCK_COMPLAINTS = [
     id: 2,
     complaint_no: 'AICTE/RB/2026/0002',
     institution_id: 1,
-    institution_name: 'Apex Institute of Engineering & Technology [SYNTHETIC]',
+    institution_name: 'Apex Institute of Engineering & Technology',
     aicte_permanent_id: '1-10293847',
     bureau: 'REGULATION_BUREAU',
     category: 'CADRE_RATIO_DEFICIT',
@@ -267,7 +267,7 @@ export const MOCK_COMPLAINTS = [
     id: 3,
     complaint_no: 'AICTE/LC/2026/0003',
     institution_id: 1,
-    institution_name: 'Apex Institute of Engineering & Technology [SYNTHETIC]',
+    institution_name: 'Apex Institute of Engineering & Technology',
     aicte_permanent_id: '1-10293847',
     bureau: 'LEGAL_CELL',
     category: 'LEGAL_DISPUTE',
@@ -287,7 +287,7 @@ export const MOCK_COMPLAINTS = [
     id: 8,
     complaint_no: 'AICTE/AB/2026/0008',
     institution_id: 3,
-    institution_name: 'Delhi Institute of Technology & Management [SYNTHETIC]',
+    institution_name: 'Delhi Institute of Technology & Management',
     aicte_permanent_id: '1-99887766',
     bureau: 'APPROVAL_BUREAU',
     category: 'UNAPPROVED_COURSES',
@@ -307,7 +307,7 @@ export const MOCK_COMPLAINTS = [
     id: 9,
     complaint_no: 'AICTE/PGRC/2026/0009',
     institution_id: 3,
-    institution_name: 'Delhi Institute of Technology & Management [SYNTHETIC]',
+    institution_name: 'Delhi Institute of Technology & Management',
     aicte_permanent_id: '1-99887766',
     bureau: 'PGRC',
     category: 'FEE_EXTORTION',
@@ -327,7 +327,7 @@ export const MOCK_COMPLAINTS = [
     id: 7,
     complaint_no: 'AICTE/REGL/2026/0007',
     institution_id: 4,
-    institution_name: 'Kolkata Polytechnic Institute [SYNTHETIC]',
+    institution_name: 'Kolkata Polytechnic Institute',
     aicte_permanent_id: '1-66554433',
     bureau: 'REGULATION_BUREAU',
     category: 'INFRASTRUCTURE_NORMS',
@@ -579,7 +579,7 @@ export function getMockFallback<T = any>(
         id: 1,
         linkage_id: 1,
         lead_bureau: 'APPROVAL_BUREAU',
-        institution_name: 'Delhi Institute of Technology & Management [SYNTHETIC]',
+        institution_name: 'Delhi Institute of Technology & Management',
         status: 'ACTIVE',
         decision: 'JOINT_INQUIRY',
         tasks: [
