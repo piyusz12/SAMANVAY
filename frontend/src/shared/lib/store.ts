@@ -21,12 +21,28 @@ export interface UserPersona {
   avatar: string;
 }
 
-interface AppState {
+export interface AppState {
   // Navigation & View
-  activeTab: 'dashboard' | 'complaints' | 'institutions' | 'conflicts' | 'coordination' | 'analytics' | 'audit';
+  activeTab:
+    | 'dashboard'
+    | 'track'
+    | 'complaints'
+    | 'institutions'
+    | 'conflicts'
+    | 'coordination'
+    | 'charter'
+    | 'circulars'
+    | 'analytics'
+    | 'audit';
+  portalMode: 'citizen' | 'officer';
   sidebarCollapsed: boolean;
   activeBureauFilter: string;
   searchQuery: string;
+
+  // Accessibility & Localization
+  fontSize: 'normal' | 'large' | 'larger';
+  highContrast: boolean;
+  language: 'en' | 'hi';
 
   // Selected Entities
   selectedComplaintId: number | null;
@@ -43,7 +59,11 @@ interface AppState {
 
   // Actions
   setActiveTab: (tab: AppState['activeTab']) => void;
+  setPortalMode: (mode: 'citizen' | 'officer') => void;
   toggleSidebar: () => void;
+  setFontSize: (size: 'normal' | 'large' | 'larger') => void;
+  toggleHighContrast: () => void;
+  setLanguage: (lang: 'en' | 'hi') => void;
   setBureauFilter: (bureau: string) => void;
   setSearchQuery: (query: string) => void;
   setSelectedComplaintId: (id: number | null) => void;
@@ -60,9 +80,14 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set) => ({
   activeTab: 'dashboard',
+  portalMode: 'officer',
   sidebarCollapsed: false,
   activeBureauFilter: 'ALL',
   searchQuery: '',
+
+  fontSize: 'normal',
+  highContrast: false,
+  language: 'en',
 
   selectedComplaintId: null,
   selectedInstitutionId: null,
@@ -75,7 +100,11 @@ export const useAppStore = create<AppState>((set) => ({
   offlineQueue: [],
 
   setActiveTab: (tab) => set({ activeTab: tab }),
+  setPortalMode: (mode) => set({ portalMode: mode }),
   toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+  setFontSize: (size) => set({ fontSize: size }),
+  toggleHighContrast: () => set((state) => ({ highContrast: !state.highContrast })),
+  setLanguage: (lang) => set({ language: lang }),
   setBureauFilter: (bureau) => set({ activeBureauFilter: bureau }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSelectedComplaintId: (id) => set({ selectedComplaintId: id }),

@@ -5,6 +5,8 @@ import { useAppStore } from '../shared/lib/store';
 import { GlobalNavigationSidebar } from '../widgets/navigation-sidebar';
 import { ExecutiveOverviewHeader } from '../widgets/overview-header';
 import { NotificationCenterDrawer } from '../widgets/notification-center';
+import { PortalFooter } from '../widgets/portal-footer';
+import { AicteSahayakWidget } from '../widgets/ai-sahayak';
 
 // FSD Views
 import { DashboardPage } from '../views/dashboard';
@@ -14,6 +16,9 @@ import { ConflictsPage } from '../views/conflicts';
 import { CoordinationPage } from '../views/coordination';
 import { AnalyticsPage } from '../views/analytics';
 import { AuditPage } from '../views/audit';
+import { TrackComplaintPage } from '../views/track-complaint';
+import { CitizensCharterPage } from '../views/citizens-charter';
+import { CircularsPage } from '../views/circulars';
 
 // Features / Modals
 import { LodgeComplaintModal } from '../features/lodge-complaint';
@@ -31,6 +36,8 @@ export default function Home() {
     sidebarCollapsed,
     selectedInstitutionId,
     setSelectedInstitutionId,
+    fontSize,
+    highContrast,
   } = useAppStore();
 
   // Modals state
@@ -56,67 +63,92 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex">
-      {/* 1. Global Navigation Sidebar */}
-      <GlobalNavigationSidebar onOpenPersona={() => setIsPersonaOpen(true)} />
+    <div
+      className={`min-h-screen bg-slate-950 text-slate-100 flex flex-col ${
+        highContrast ? 'contrast-125 saturate-125' : ''
+      } ${fontSize === 'large' ? 'text-[15px]' : fontSize === 'larger' ? 'text-[16px]' : 'text-sm'}`}
+    >
+      <div className="flex-1 flex">
+        {/* 1. Global Navigation Sidebar */}
+        <GlobalNavigationSidebar onOpenPersona={() => setIsPersonaOpen(true)} />
 
-      {/* 2. Main Content Canvas */}
-      <div
-        className={`flex-1 flex flex-col transition-all duration-300 ${
-          sidebarCollapsed ? 'ml-18' : 'ml-64'
-        }`}
-      >
-        {/* Header Bar */}
-        <ExecutiveOverviewHeader
-          onOpenLodge={() => setIsLodgeOpen(true)}
-          onOpenNotifications={() => setIsNotificationsOpen(true)}
-          onOpenPersona={() => setIsPersonaOpen(true)}
-          onOpenSearch={() => setIsSearchOpen(true)}
-          onOpenHealth={() => setIsHealthOpen(true)}
-        />
+        {/* 2. Main Content Canvas */}
+        <div
+          className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
+            sidebarCollapsed ? 'ml-18' : 'ml-64'
+          }`}
+        >
+          {/* Header Bar */}
+          <ExecutiveOverviewHeader
+            onOpenLodge={() => setIsLodgeOpen(true)}
+            onOpenNotifications={() => setIsNotificationsOpen(true)}
+            onOpenPersona={() => setIsPersonaOpen(true)}
+            onOpenSearch={() => setIsSearchOpen(true)}
+            onOpenHealth={() => setIsHealthOpen(true)}
+          />
 
-        {/* Dynamic Page Views */}
-        <main className="flex-1 p-6 max-w-7xl w-full mx-auto">
-          {activeTab === 'dashboard' && (
-            <DashboardPage
-              onOpenLodge={() => setIsLodgeOpen(true)}
-              onOpenOverlapReview={(id, no) => setOverlapReviewData({ id, no })}
-              onSelectInstitution={handleSelectInstitution}
-              onSelectComplaint={handleSelectComplaint}
-            />
-          )}
+          {/* Dynamic Page Views */}
+          <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
+            {activeTab === 'dashboard' && (
+              <DashboardPage
+                onOpenLodge={() => setIsLodgeOpen(true)}
+                onOpenOverlapReview={(id, no) => setOverlapReviewData({ id, no })}
+                onSelectInstitution={handleSelectInstitution}
+                onSelectComplaint={handleSelectComplaint}
+              />
+            )}
 
-          {activeTab === 'complaints' && (
-            <ComplaintsPage
-              onOpenLodge={() => setIsLodgeOpen(true)}
-              onOpenOverlapReview={(id, no) => setOverlapReviewData({ id, no })}
-              onOpenTransition={(comp) => setStatusTransitionComplaint(comp)}
-              onOpenTransfer={(comp) => setTransferComplaint(comp)}
-              onSelectComplaint={handleSelectComplaint}
-            />
-          )}
+            {activeTab === 'track' && (
+              <TrackComplaintPage
+                onOpenLodge={() => setIsLodgeOpen(true)}
+                onSelectInstitution={handleSelectInstitution}
+              />
+            )}
 
-          {activeTab === 'institutions' && (
-            <InstitutionsPage
-              selectedId={selectedInstitutionId}
-              onSelectId={(id) => setSelectedInstitutionId(id)}
-            />
-          )}
+            {activeTab === 'charter' && (
+              <CitizensCharterPage onOpenLodge={() => setIsLodgeOpen(true)} />
+            )}
 
-          {activeTab === 'conflicts' && (
-            <ConflictsPage
-              onOpenOverlapReview={(id, no) => setOverlapReviewData({ id, no })}
-              onSelectInstitution={handleSelectInstitution}
-            />
-          )}
+            {activeTab === 'circulars' && <CircularsPage />}
 
-          {activeTab === 'coordination' && <CoordinationPage />}
+            {activeTab === 'complaints' && (
+              <ComplaintsPage
+                onOpenLodge={() => setIsLodgeOpen(true)}
+                onOpenOverlapReview={(id, no) => setOverlapReviewData({ id, no })}
+                onOpenTransition={(comp) => setStatusTransitionComplaint(comp)}
+                onOpenTransfer={(comp) => setTransferComplaint(comp)}
+                onSelectComplaint={handleSelectComplaint}
+              />
+            )}
 
-          {activeTab === 'analytics' && <AnalyticsPage />}
+            {activeTab === 'institutions' && (
+              <InstitutionsPage
+                selectedId={selectedInstitutionId}
+                onSelectId={(id) => setSelectedInstitutionId(id)}
+              />
+            )}
 
-          {activeTab === 'audit' && <AuditPage />}
-        </main>
+            {activeTab === 'conflicts' && (
+              <ConflictsPage
+                onOpenOverlapReview={(id, no) => setOverlapReviewData({ id, no })}
+                onSelectInstitution={handleSelectInstitution}
+              />
+            )}
+
+            {activeTab === 'coordination' && <CoordinationPage />}
+
+            {activeTab === 'analytics' && <AnalyticsPage />}
+
+            {activeTab === 'audit' && <AuditPage />}
+          </main>
+
+          {/* 3. Comprehensive Portal Footer */}
+          <PortalFooter />
+        </div>
       </div>
+
+      {/* Floating 24x7 Helpdesk AI Assistant */}
+      <AicteSahayakWidget onOpenLodge={() => setIsLodgeOpen(true)} />
 
       {/* Global Modals & Drawers */}
       <LodgeComplaintModal
