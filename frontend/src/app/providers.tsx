@@ -23,7 +23,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // Initialize theme from storage (default dark)
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('samanvay-theme');
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryTheme = urlParams.get('theme');
+      const saved = queryTheme || localStorage.getItem('samanvay-theme');
       if (saved === 'light') {
         useAppStore.getState().setTheme('light');
       } else {

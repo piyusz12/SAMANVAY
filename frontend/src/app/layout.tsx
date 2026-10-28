@@ -48,7 +48,9 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var saved = localStorage.getItem('samanvay-theme');
+                  var urlParams = new URLSearchParams(window.location.search);
+                  var queryTheme = urlParams.get('theme');
+                  var saved = queryTheme || localStorage.getItem('samanvay-theme');
                   if (saved === 'light') {
                     document.documentElement.classList.remove('dark');
                     document.documentElement.classList.add('light');
