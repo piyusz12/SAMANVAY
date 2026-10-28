@@ -17,6 +17,7 @@ from backend.app.models.audit_log import AuditLog
 from backend.app.models.system_config import SystemConfig
 from backend.app.services.auth_service import get_password_hash
 from backend.app.core.datetime_util import utc_now
+from backend.app.core.colleges_seed import NATIONAL_COLLEGES_SEED
 from backend.app.config import settings
 
 DEMO_PASSWORD_HASH = get_password_hash("Demo@AICTE2026!")
@@ -176,79 +177,8 @@ def seed_database(db: Session, force: bool = False):
             db.add(membership)
     db.flush()
 
-    # 4. Seed Synthetic Institutions (with AISHE code & PIN code)
-    institutions_data = [
-        {
-            "aicte_id": "1-10293847",
-            "aishe_code": "C-44120",
-            "name": "Apex Institute of Engineering & Technology [SYNTHETIC]",
-            "state": "Maharashtra",
-            "city": "Pune",
-            "pin_code": "411057",
-            "region": "Western",
-            "institution_type": "Private-Self-Financed",
-            "approval_status": "SHOW_CAUSE_NOTICE",
-            "address": "Survey 42, Hinjawadi Phase 2, Pune, Maharashtra",
-            "contact_email": "registrar@apex-tech-synthetic.edu.in",
-            "contact_phone": "+91 20 2293 8470"
-        },
-        {
-            "aicte_id": "1-28491022",
-            "aishe_code": "C-51908",
-            "name": "National Institute of Science & Technology [SYNTHETIC]",
-            "state": "Karnataka",
-            "city": "Bengaluru",
-            "pin_code": "560100",
-            "region": "South-West",
-            "institution_type": "Deemed University",
-            "approval_status": "UNDER_SCRUTINY",
-            "address": "Electronic City Phase 1, Bengaluru, Karnataka",
-            "contact_email": "admin@nist-synthetic.edu.in",
-            "contact_phone": "+91 80 2849 1022"
-        },
-        {
-            "aicte_id": "1-39485721",
-            "aishe_code": "C-39102",
-            "name": "Global Institute of Management Studies [SYNTHETIC]",
-            "state": "Uttar Pradesh",
-            "city": "Noida",
-            "pin_code": "201310",
-            "region": "Northern",
-            "institution_type": "Private-Self-Financed",
-            "approval_status": "APPROVED",
-            "address": "Knowledge Park III, Greater Noida, UP",
-            "contact_email": "director@gims-synthetic.edu.in",
-            "contact_phone": "+91 120 3948 5721"
-        },
-        {
-            "aicte_id": "1-58392019",
-            "aishe_code": "C-22910",
-            "name": "Heritage Polytechnic Institute [SYNTHETIC]",
-            "state": "West Bengal",
-            "city": "Kolkata",
-            "pin_code": "700091",
-            "region": "Eastern",
-            "institution_type": "Govt-Aided",
-            "approval_status": "APPROVED",
-            "address": "Sector V, Salt Lake, Kolkata, West Bengal",
-            "contact_email": "principal@heritage-poly-synthetic.edu.in",
-            "contact_phone": "+91 33 5839 2019"
-        },
-        {
-            "aicte_id": "1-74829103",
-            "aishe_code": "C-61099",
-            "name": "Central Indian Institute of Technology [SYNTHETIC]",
-            "state": "Madhya Pradesh",
-            "city": "Bhopal",
-            "pin_code": "462011",
-            "region": "Central",
-            "institution_type": "Govt",
-            "approval_status": "APPROVED",
-            "address": "Arera Hills, Bhopal, Madhya Pradesh",
-            "contact_email": "office@ciit-synthetic.edu.in",
-            "contact_phone": "+91 755 7482 9103"
-        }
-    ]
+    # 4. Seed Recognized Technical Institutions across India
+    institutions_data = NATIONAL_COLLEGES_SEED
 
     inst_map = {}
     for inst in institutions_data:
