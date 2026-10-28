@@ -12,7 +12,8 @@ import { Building2, Search, AlertTriangle, FileText, MapPin, CheckCircle2 } from
 export const InstitutionsPage: React.FC<{
   selectedId: number | null;
   onSelectId: (id: number | null) => void;
-}> = ({ selectedId, onSelectId }) => {
+  onOpenLodge?: (institutionId?: number) => void;
+}> = ({ selectedId, onSelectId, onOpenLodge }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const { data: institutions = [], isLoading } = useInstitutions(searchTerm);
 
@@ -113,11 +114,23 @@ export const InstitutionsPage: React.FC<{
                   </p>
                 </div>
 
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <div className="flex flex-col items-end gap-2 shrink-0">
                   <Badge variant={dossier.has_conflicts ? 'rose' : 'emerald'} size="md">
                     {dossier.has_conflicts ? '⚠️ Cross-Bureau Collision Active' : '🟢 Clean Inter-Bureau Standing'}
                   </Badge>
                   <span className="text-[11px] text-slate-500 font-mono">Status: {dossier.institution.status}</span>
+                  {onOpenLodge && (
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => onOpenLodge(dossier.institution.id)}
+                      leftIcon={<FileText className="h-3.5 w-3.5" />}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-sm text-xs mt-1"
+                    >
+                      Register Case Against Institution
+                    </Button>
+                  )}
                 </div>
               </div>
 

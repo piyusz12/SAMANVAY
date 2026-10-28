@@ -42,6 +42,7 @@ export default function Home() {
 
   // Modals state
   const [isLodgeOpen, setIsLodgeOpen] = useState(false);
+  const [preselectedInstitutionId, setPreselectedInstitutionId] = useState<number | null>(null);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isPersonaOpen, setIsPersonaOpen] = useState(false);
   const [isHealthOpen, setIsHealthOpen] = useState(false);
@@ -52,6 +53,11 @@ export default function Home() {
   const [overlapReviewData, setOverlapReviewData] = useState<{ id: number; no: string } | null>(null);
   const [statusTransitionComplaint, setStatusTransitionComplaint] = useState<any | null>(null);
   const [transferComplaint, setTransferComplaint] = useState<any | null>(null);
+
+  const handleOpenLodge = (institutionId?: number | null) => {
+    setPreselectedInstitutionId(institutionId ?? null);
+    setIsLodgeOpen(true);
+  };
 
   const handleSelectInstitution = (id: number) => {
     setSelectedInstitutionId(id);
@@ -80,7 +86,7 @@ export default function Home() {
         >
           {/* Header Bar */}
           <ExecutiveOverviewHeader
-            onOpenLodge={() => setIsLodgeOpen(true)}
+            onOpenLodge={() => handleOpenLodge(null)}
             onOpenNotifications={() => setIsNotificationsOpen(true)}
             onOpenPersona={() => setIsPersonaOpen(true)}
             onOpenSearch={() => setIsSearchOpen(true)}
@@ -91,7 +97,7 @@ export default function Home() {
           <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
             {activeTab === 'dashboard' && (
               <DashboardPage
-                onOpenLodge={() => setIsLodgeOpen(true)}
+                onOpenLodge={() => handleOpenLodge(null)}
                 onOpenOverlapReview={(id, no) => setOverlapReviewData({ id, no })}
                 onSelectInstitution={handleSelectInstitution}
                 onSelectComplaint={handleSelectComplaint}
@@ -100,20 +106,20 @@ export default function Home() {
 
             {activeTab === 'track' && (
               <TrackComplaintPage
-                onOpenLodge={() => setIsLodgeOpen(true)}
+                onOpenLodge={() => handleOpenLodge(null)}
                 onSelectInstitution={handleSelectInstitution}
               />
             )}
 
             {activeTab === 'charter' && (
-              <CitizensCharterPage onOpenLodge={() => setIsLodgeOpen(true)} />
+              <CitizensCharterPage onOpenLodge={() => handleOpenLodge(null)} />
             )}
 
             {activeTab === 'circulars' && <CircularsPage />}
 
             {activeTab === 'complaints' && (
               <ComplaintsPage
-                onOpenLodge={() => setIsLodgeOpen(true)}
+                onOpenLodge={() => handleOpenLodge(null)}
                 onOpenOverlapReview={(id, no) => setOverlapReviewData({ id, no })}
                 onOpenTransition={(comp) => setStatusTransitionComplaint(comp)}
                 onOpenTransfer={(comp) => setTransferComplaint(comp)}
@@ -125,6 +131,7 @@ export default function Home() {
               <InstitutionsPage
                 selectedId={selectedInstitutionId}
                 onSelectId={(id) => setSelectedInstitutionId(id)}
+                onOpenLodge={(id) => handleOpenLodge(id)}
               />
             )}
 
@@ -148,12 +155,16 @@ export default function Home() {
       </div>
 
       {/* Floating 24x7 Helpdesk AI Assistant */}
-      <AicteSahayakWidget onOpenLodge={() => setIsLodgeOpen(true)} />
+      <AicteSahayakWidget onOpenLodge={() => handleOpenLodge(null)} />
 
       {/* Global Modals & Drawers */}
       <LodgeComplaintModal
         isOpen={isLodgeOpen}
-        onClose={() => setIsLodgeOpen(false)}
+        onClose={() => {
+          setIsLodgeOpen(false);
+          setPreselectedInstitutionId(null);
+        }}
+        initialInstitutionId={preselectedInstitutionId}
       />
 
       <PersonaSwitcherModal
@@ -176,6 +187,7 @@ export default function Home() {
         onClose={() => setIsSearchOpen(false)}
         onSelectComplaint={handleSelectComplaint}
         onSelectInstitution={handleSelectInstitution}
+        onLodgeComplaintForInstitution={(id) => handleOpenLodge(id)}
       />
 
       {detailComplaintId !== null && (

@@ -46,6 +46,7 @@ export interface UnifiedSearchModalProps {
   onClose: () => void;
   onSelectComplaint: (id: number) => void;
   onSelectInstitution: (id: number) => void;
+  onLodgeComplaintForInstitution?: (id: number) => void;
 }
 
 export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
@@ -53,6 +54,7 @@ export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
   onClose,
   onSelectComplaint,
   onSelectInstitution,
+  onLodgeComplaintForInstitution,
 }) => {
   const { userLocation, setUserLocation } = useAppStore();
 
@@ -701,6 +703,21 @@ export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
                             >
                               <Globe className="h-3.5 w-3.5" />
                             </a>
+                          )}
+
+                          {onLodgeComplaintForInstitution && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onLodgeComplaintForInstitution(col.id);
+                                onClose();
+                              }}
+                              className="p-1.5 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1 cursor-pointer shrink-0"
+                              title={`Lodge grievance / register case against ${col.name}`}
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                              <span>Register Case</span>
+                            </button>
                           )}
 
                           <button

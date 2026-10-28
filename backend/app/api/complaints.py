@@ -241,10 +241,15 @@ def lodge_complaint(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Action prohibited: Read-Only Auditor accounts cannot lodge complaint cases."
             )
-        if user_role not in ("SUPER_ADMIN",) and complaint_in.bureau != current_user.bureau:
+        is_citizen_intake = (
+            complaint_in.complainant_category.upper() in (
+                "STUDENT", "FACULTY", "PARENT", "CITIZEN", "WHISTLEBLOWER"
+            ) or complaint_in.is_anonymous_confidential
+        )
+        if not is_citizen_intake and user_role not in ("SUPER_ADMIN",) and complaint_in.bureau != current_user.bureau:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Bureau mismatch: You belong to {current_user.bureau} and cannot lodge cases for {complaint_in.bureau}."
+                detail=f"Bureau mismatch: You belong to {current_user.bureau} and cannot lodge internal cases for {complaint_in.bureau}."
             )
 
     try:

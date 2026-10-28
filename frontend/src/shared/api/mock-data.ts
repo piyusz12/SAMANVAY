@@ -3,6 +3,8 @@
  * Provides deterministic AICTE demonstration data when backend is in standalone preview or offline mode.
  */
 
+import { NATIONAL_COLLEGES_DIRECTORY } from '../config/colleges-geo';
+
 export const MOCK_CONFLICTS = [
   {
     institution_id: 1,
@@ -135,92 +137,61 @@ export const MOCK_CONFLICTS = [
   },
 ];
 
-export const MOCK_INSTITUTIONS = [
-  {
-    id: 1,
-    name: 'Apex Institute of Engineering & Technology',
-    aicte_permanent_id: '1-10293847',
-    aishe_code: 'C-49102',
-    address: 'Sector 12, Knowledge Park III, Navi Mumbai',
-    state: 'Maharashtra',
-    region: 'Western',
-    category: 'Engineering & Technology',
-    status: 'ACTIVE',
-    active_cases_count: 3,
-    active_bureaus: ['REGULATION_BUREAU', 'PGRC', 'LEGAL_CELL'],
-    has_conflict: true,
-  },
-  {
-    id: 2,
-    name: 'National Institute of Science & Technology',
-    aicte_permanent_id: '1-28491022',
-    aishe_code: 'C-38291',
-    address: 'Plot 45, Electronic City Phase 1, Bangalore',
-    state: 'Karnataka',
-    region: 'South-West',
-    category: 'Engineering & Technology',
-    status: 'ACTIVE',
-    active_cases_count: 2,
-    active_bureaus: ['VIGILANCE_CELL', 'PGRC'],
-    has_conflict: true,
-  },
-  {
-    id: 3,
-    name: 'Delhi Institute of Technology & Management',
-    aicte_permanent_id: '1-99887766',
-    aishe_code: 'C-27483',
-    address: 'Institutional Area, Rohini Sector 22, New Delhi',
-    state: 'Delhi',
-    region: 'Northern',
-    category: 'Engineering & Technology',
-    status: 'ACTIVE',
-    active_cases_count: 4,
-    active_bureaus: ['APPROVAL_BUREAU', 'PGRC', 'LEGAL_CELL'],
-    has_conflict: true,
-  },
-  {
-    id: 4,
-    name: 'Kolkata Polytechnic Institute',
-    aicte_permanent_id: '1-66554433',
-    aishe_code: 'C-16572',
-    address: 'Raja SC Mullick Road, Jadavpur, Kolkata',
-    state: 'West Bengal',
-    region: 'Eastern',
-    category: 'Polytechnic Diploma',
-    status: 'ACTIVE',
-    active_cases_count: 1,
-    active_bureaus: ['REGULATION_BUREAU'],
-    has_conflict: false,
-  },
-  {
-    id: 5,
-    name: 'Chennai Global Engineering College',
-    aicte_permanent_id: '1-55443322',
-    aishe_code: 'C-05661',
-    address: 'Rajiv Gandhi Salai (OMR), Karapakkam, Chennai',
-    state: 'Tamil Nadu',
-    region: 'Southern',
-    category: 'Engineering & Technology',
-    status: 'ACTIVE',
-    active_cases_count: 0,
-    active_bureaus: [],
-    has_conflict: false,
-  },
-  {
-    id: 6,
-    name: 'Bhopal Institute of Science & Applied Tech',
-    aicte_permanent_id: '1-44332211',
-    aishe_code: 'C-94750',
-    address: 'Airport Road, Gandhinagar, Bhopal',
-    state: 'Madhya Pradesh',
-    region: 'Central',
-    category: 'Engineering & Technology',
-    status: 'ACTIVE',
-    active_cases_count: 0,
-    active_bureaus: [],
-    has_conflict: false,
-  },
-];
+export const MOCK_INSTITUTIONS = NATIONAL_COLLEGES_DIRECTORY.map((col) => {
+  const isApex = col.id === 1;
+  const isNist = col.id === 2;
+  const isDitm = col.id === 3;
+  const isKolkata = col.id === 4;
+
+  let activeBureaus: string[] = [];
+  let hasConflict = col.is_conflicting || false;
+  let activeCount = col.active_complaints_count || 0;
+
+  if (isApex) {
+    activeBureaus = ['REGULATION_BUREAU', 'PGRC', 'LEGAL_CELL'];
+    hasConflict = true;
+    activeCount = 3;
+  } else if (isNist) {
+    activeBureaus = ['VIGILANCE_CELL', 'PGRC'];
+    hasConflict = true;
+    activeCount = 2;
+  } else if (isDitm) {
+    activeBureaus = ['APPROVAL_BUREAU', 'PGRC', 'LEGAL_CELL'];
+    hasConflict = true;
+    activeCount = 4;
+  } else if (isKolkata) {
+    activeBureaus = ['REGULATION_BUREAU'];
+    hasConflict = false;
+    activeCount = 1;
+  }
+
+  return {
+    id: col.id,
+    name: col.name,
+    shortName: col.shortName,
+    aicte_permanent_id: col.aicte_id,
+    aicte_id: col.aicte_id,
+    aishe_code: col.aishe_code,
+    address: col.address,
+    city: col.city,
+    state: col.state,
+    region: col.region,
+    pin_code: col.pin_code,
+    category: col.category,
+    status: col.approval_status === 'APPROVED' ? 'ACTIVE' : col.approval_status,
+    active_cases_count: activeCount,
+    active_bureaus: activeBureaus,
+    has_conflict: hasConflict,
+    coordinates: col.coordinates,
+    website: col.website,
+    nirfRank: col.nirfRank,
+    accreditation: col.accreditation,
+    intakeCapacity: col.intakeCapacity,
+    contact_phone: col.contact_phone,
+    contact_email: col.contact_email,
+    created_at: new Date(Date.now() - 365 * 86400000).toISOString(),
+  };
+});
 
 export const MOCK_COMPLAINTS = [
   {
@@ -442,8 +413,70 @@ export function getMockFallback<T = any>(
     return MOCK_CONFLICTS as unknown as T;
   }
 
-  // 2. Complaints list & detail
+  // 2. Complaints list, detail & POST intake
   if (cleanEndpoint === '/api/v1/complaints') {
+    if (method.toUpperCase() === 'POST') {
+      let payload: any = {};
+      try {
+        payload = typeof _body === 'string' ? JSON.parse(_body) : (_body || {});
+      } catch {
+        payload = _body || {};
+      }
+
+      const instId = Number(payload.institution_id);
+      const inst = MOCK_INSTITUTIONS.find((i) => i.id === instId) || MOCK_INSTITUTIONS[0];
+      const newId = Date.now();
+      const bureauCode = payload.bureau || 'PGRC';
+      const randomSuffix = String(Math.floor(1000 + Math.random() * 9000));
+      const complaintNo = `AICTE/${bureauCode}/2026/${randomSuffix}`;
+      const nowIso = new Date().toISOString();
+      const slaDays = Number(payload.sla_deadline_days) || 30;
+      const slaDueDate = new Date(Date.now() + slaDays * 86400000).toISOString();
+
+      const createdComplaint = {
+        id: newId,
+        complaint_no: complaintNo,
+        institution_id: inst.id,
+        institution_name: inst.name,
+        aicte_permanent_id: inst.aicte_permanent_id,
+        bureau: bureauCode,
+        category: payload.category || 'FEE_EXTORTION',
+        subject: payload.subject || 'Citizen Grievance Submission',
+        description: payload.description || '',
+        status: 'LODGED',
+        priority: payload.priority || 'HIGH',
+        assigned_officer_id: payload.assigned_officer_id ? Number(payload.assigned_officer_id) : 0,
+        assigned_officer_name: payload.assigned_officer_name || 'Desk Officer (Pending Allocation)',
+        complainant_name: payload.complainant_name || 'Anonymous Citizen',
+        complainant_category: payload.complainant_category || 'STUDENT',
+        complainant_email: payload.complainant_email || null,
+        complainant_phone: payload.complainant_phone || null,
+        is_anonymous_confidential: Boolean(payload.is_anonymous_confidential),
+        created_at: nowIso,
+        sla_due_date: slaDueDate,
+        is_overdue: false,
+      };
+
+      MOCK_COMPLAINTS.unshift(createdComplaint);
+
+      // Increment analytics counters
+      MOCK_ANALYTICS.total_complaints = (MOCK_ANALYTICS.total_complaints || 0) + 1;
+      MOCK_ANALYTICS.total_complaints_received = (MOCK_ANALYTICS.total_complaints_received || 0) + 1;
+      MOCK_ANALYTICS.open_pending_complaints = (MOCK_ANALYTICS.open_pending_complaints || 0) + 1;
+      MOCK_ANALYTICS.active_complaints = (MOCK_ANALYTICS.active_complaints || 0) + 1;
+
+      // Update institution active cases
+      inst.active_cases_count = (inst.active_cases_count || 0) + 1;
+      if (!inst.active_bureaus.includes(bureauCode)) {
+        inst.active_bureaus.push(bureauCode);
+      }
+      if (inst.active_bureaus.length >= 2) {
+        inst.has_conflict = true;
+      }
+
+      return createdComplaint as unknown as T;
+    }
+
     let items = [...MOCK_COMPLAINTS];
     if (params?.bureau && params.bureau !== 'ALL') {
       items = items.filter((c) => c.bureau === params.bureau);
@@ -473,7 +506,19 @@ export function getMockFallback<T = any>(
 
   // 3. Institutions & Dossier
   if (cleanEndpoint === '/api/v1/institutions') {
-    return MOCK_INSTITUTIONS as unknown as T;
+    const search = (params?.search || '').toLowerCase().trim();
+    if (!search) {
+      return MOCK_INSTITUTIONS as unknown as T;
+    }
+    const filtered = MOCK_INSTITUTIONS.filter(
+      (inst) =>
+        inst.name.toLowerCase().includes(search) ||
+        inst.aicte_permanent_id.toLowerCase().includes(search) ||
+        inst.city?.toLowerCase().includes(search) ||
+        inst.state?.toLowerCase().includes(search) ||
+        (inst.shortName && inst.shortName.toLowerCase().includes(search))
+    );
+    return filtered as unknown as T;
   }
 
   const dossierMatch = cleanEndpoint.match(/^\/api\/v1\/institutions\/(\d+)\/dossier/);
@@ -481,8 +526,18 @@ export function getMockFallback<T = any>(
     const instId = parseInt(dossierMatch[1], 10);
     const inst = MOCK_INSTITUTIONS.find((i) => i.id === instId) || MOCK_INSTITUTIONS[0];
     const relatedCases = MOCK_COMPLAINTS.filter((c) => c.institution_id === inst.id);
+    const activeCases = relatedCases.filter((c) => c.status !== 'RESOLVED' && c.status !== 'DISPOSED');
+    const disposedCases = relatedCases.filter((c) => c.status === 'RESOLVED' || c.status === 'DISPOSED');
+    const involvedBureaus = Array.from(new Set(relatedCases.map((c) => c.bureau)));
+
     return {
       institution: inst,
+      total_complaints: relatedCases.length,
+      active_inquiries: activeCases.length,
+      disposed_cases: disposedCases.length,
+      involved_bureaus: involvedBureaus.length > 0 ? involvedBureaus : inst.active_bureaus,
+      complaints: relatedCases,
+      has_conflicts: inst.has_conflict,
       active_cases: relatedCases,
       historical_cases: [],
       conflict_summary: {
