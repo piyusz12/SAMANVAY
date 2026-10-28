@@ -222,6 +222,11 @@ html.light button[class*="border-slate-800"]:hover {
   color: #0f172a !important;
 }
 
+html.light button[class*="border-slate-700"]:hover *,
+html.light button[class*="border-slate-800"]:hover * {
+  color: #0f172a !important;
+}
+
 /* =========================================================================
    HEADER & NAVIGATION IN LIGHT MODE
    ========================================================================= */
@@ -476,10 +481,41 @@ html.light .fixed[class*="bg-slate-950"].rounded-2xl div[class*="bg-slate-900"] 
 html.light footer {
   background-color: #ffffff !important;
   border-top: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
 }
 
-html.light footer .text-slate-400 {
+html.light footer h4 {
+  color: #0f172a !important;
+}
+
+html.light footer p {
   color: #475569 !important;
+}
+
+html.light footer a,
+html.light footer button {
+  color: #475569 !important;
+}
+
+html.light footer a:hover,
+html.light footer button:hover {
+  color: #2563eb !important;
+}
+
+html.light footer a:hover *,
+html.light footer button:hover * {
+  color: #2563eb !important;
+}
+
+html.light footer .text-slate-400,
+html.light footer .text-slate-500,
+html.light footer .text-slate-600 {
+  color: #475569 !important;
+}
+
+html.light footer .border-slate-900,
+html.light footer [class*="border-slate-900"] {
+  border-color: #e2e8f0 !important;
 }
 
 /* Samanvay Logo Branding Typography */
