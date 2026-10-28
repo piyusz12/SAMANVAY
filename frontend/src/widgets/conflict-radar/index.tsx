@@ -64,13 +64,16 @@ export const ConflictRadarWidget: React.FC<{ onSelectInstitution: (id: number) =
                       {conf.institution_name || 'Institution not recorded'}
                     </h5>
                     <span className="text-[11px] font-mono text-slate-400">
-                      {conf.aicte_permanent_id ? `ID: ${conf.aicte_permanent_id}` : 'ID: Not recorded'}
+                      {conf.aicte_id || conf.aicte_permanent_id
+                        ? `ID: ${conf.aicte_id || conf.aicte_permanent_id}`
+                        : 'ID: Not recorded'}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                     <span className="text-[11px] text-slate-400">Involved Bureaus:</span>
-                    {conf.involved_bureaus && conf.involved_bureaus.length > 0 ? (
-                      conf.involved_bureaus.map((b: string) => (
+                    {(conf.bureaus_involved || conf.involved_bureaus) &&
+                    (conf.bureaus_involved || conf.involved_bureaus).length > 0 ? (
+                      (conf.bureaus_involved || conf.involved_bureaus).map((b: string) => (
                         <Badge key={b} variant="rose" size="sm">
                           {b}
                         </Badge>
@@ -79,7 +82,7 @@ export const ConflictRadarWidget: React.FC<{ onSelectInstitution: (id: number) =
                       <span className="text-[11px] text-slate-500">None specified</span>
                     )}
                     <span className="text-[11px] text-rose-400 font-semibold ml-2">
-                      ⚠️ {conf.total_active_complaints ?? 0} active cases
+                      ⚠️ {conf.active_cases_count ?? conf.total_active_complaints ?? 0} active cases
                     </span>
                   </div>
                 </div>

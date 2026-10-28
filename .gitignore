@@ -9,6 +9,8 @@ __pycache__/
 htmlcov/
 *.sqlite3
 *.db
+*.db-wal
+*.db-shm
 # Storage and Uploads
 uploads/
 storage/

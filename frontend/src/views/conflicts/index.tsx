@@ -58,7 +58,9 @@ export const ConflictsPage: React.FC<{
                       {conf.institution_name || 'Institution not recorded'}
                     </h4>
                     <span className="text-xs font-mono text-slate-400">
-                      {conf.aicte_permanent_id ? `ID: ${conf.aicte_permanent_id}` : 'ID: Not recorded'}
+                      {conf.aicte_id || conf.aicte_permanent_id
+                        ? `ID: ${conf.aicte_id || conf.aicte_permanent_id}`
+                        : 'ID: Not recorded'}
                     </span>
                     <Badge variant="rose" size="sm">
                       ⚠️ Collision Alert
@@ -71,8 +73,9 @@ export const ConflictsPage: React.FC<{
 
                   <div className="flex items-center gap-2 pt-1 flex-wrap">
                     <span className="text-xs text-slate-400">Involved Bureaus:</span>
-                    {conf.involved_bureaus && conf.involved_bureaus.length > 0 ? (
-                      conf.involved_bureaus.map((b: string) => (
+                    {(conf.bureaus_involved || conf.involved_bureaus) &&
+                    (conf.bureaus_involved || conf.involved_bureaus).length > 0 ? (
+                      (conf.bureaus_involved || conf.involved_bureaus).map((b: string) => (
                         <Badge key={b} variant="rose" size="sm">
                           {b}
                         </Badge>
@@ -81,7 +84,10 @@ export const ConflictsPage: React.FC<{
                       <span className="text-xs text-slate-500">None specified</span>
                     )}
                     <span className="text-xs text-slate-400 ml-3">
-                      Total Active Cases: <strong className="text-white">{conf.total_active_complaints ?? 0}</strong>
+                      Total Active Cases:{' '}
+                      <strong className="text-white">
+                        {conf.active_cases_count ?? conf.total_active_complaints ?? 0}
+                      </strong>
                     </span>
                   </div>
                 </div>
@@ -98,14 +104,15 @@ export const ConflictsPage: React.FC<{
                   <Button
                     size="sm"
                     variant="primary"
-                    disabled={!conf.sample_complaint_id}
-                    onClick={() =>
-                      conf.sample_complaint_id &&
-                      onOpenOverlapReview(
-                        conf.sample_complaint_id,
-                        conf.sample_complaint_no || `Complaint #${conf.sample_complaint_id}`
-                      )
-                    }
+                    disabled={!conf.sample_complaint_id && !conf.cases?.[0]?.id}
+                    onClick={() => {
+                      const sampleId = conf.sample_complaint_id || conf.cases?.[0]?.id;
+                      const sampleNo =
+                        conf.sample_complaint_no ||
+                        conf.cases?.[0]?.complaint_no ||
+                        `Complaint #${sampleId}`;
+                      if (sampleId) onOpenOverlapReview(sampleId, sampleNo);
+                    }}
                     leftIcon={<Sparkles className="h-3.5 w-3.5" />}
                   >
                     Review Overlap

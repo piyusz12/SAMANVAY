@@ -1,4 +1,5 @@
 import { useAppStore } from '../lib/store';
+import { getMockFallback } from './mock-data';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -62,6 +63,14 @@ async function request<T = any>(endpoint: string, options: RequestOptions = {}):
     });
 
     if (!response.ok) {
+      // If the backend returns 404 (e.g. Vercel private DNS error or unconfigured route) or 5xx, try demo fallback
+      if (response.status === 404 || response.status >= 500) {
+        const fallback = getMockFallback<T>(endpoint, options.method || 'GET', options.body, params);
+        if (fallback !== undefined) {
+          return fallback;
+        }
+      }
+
       const rawText = await response.text();
       let errorBody: any = rawText;
       try {
@@ -93,6 +102,11 @@ async function request<T = any>(endpoint: string, options: RequestOptions = {}):
     return await response.json();
   } catch (error: any) {
     if (error instanceof ApiError) throw error;
+    // Network failure / server offline -> attempt mock fallback first
+    const fallback = getMockFallback<T>(endpoint, options.method || 'GET', options.body, params);
+    if (fallback !== undefined) {
+      return fallback;
+    }
     // Network failure -> Check if offline
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       store.setOnlineStatus(false);

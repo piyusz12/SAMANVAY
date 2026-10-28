@@ -34,7 +34,12 @@ export const DepartmentMetricsBoard: React.FC = () => {
     },
     {
       title: 'SLA Overdue Breaches',
-      value: isLoading ? '...' : isError ? '—' : (metrics?.sla_overdue_count ?? 0),
+      value:
+        isLoading
+          ? '...'
+          : isError
+            ? '—'
+            : (metrics?.sla_overdue_count ?? metrics?.overdue_complaints ?? 0),
       change: '> 30-day statutory limit breached',
       icon: AlertTriangle,
       color: 'text-amber-400',
@@ -43,7 +48,12 @@ export const DepartmentMetricsBoard: React.FC = () => {
     },
     {
       title: 'Disposed & Resolved',
-      value: isLoading ? '...' : isError ? '—' : (metrics?.disposed_count ?? 0),
+      value:
+        isLoading
+          ? '...'
+          : isError
+            ? '—'
+            : (metrics?.disposed_count ?? metrics?.disposed_complaints ?? metrics?.resolved_complaints ?? 0),
       change: 'Complied with official summary',
       icon: CheckCircle2,
       color: 'text-emerald-400',
