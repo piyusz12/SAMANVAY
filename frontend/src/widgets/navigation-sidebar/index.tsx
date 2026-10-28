@@ -16,6 +16,8 @@ import {
   Scale,
   BookOpen,
   X,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 export const GlobalNavigationSidebar: React.FC<{
@@ -27,7 +29,16 @@ export const GlobalNavigationSidebar: React.FC<{
   isMobileOpen = false,
   onCloseMobile,
 }) => {
-  const { activeTab, setActiveTab, sidebarCollapsed, toggleSidebar, currentUser } = useAppStore();
+  const {
+    activeTab,
+    setActiveTab,
+    sidebarCollapsed,
+    toggleSidebar,
+    currentUser,
+    theme,
+    setTheme,
+    toggleTheme,
+  } = useAppStore();
 
   const handleNavClick = (id: string) => {
     setActiveTab(id as any);
@@ -178,6 +189,56 @@ export const GlobalNavigationSidebar: React.FC<{
               })}
             </nav>
           </div>
+        </div>
+
+        {/* Theme Mode Switcher */}
+        <div className="px-3 pt-2.5 pb-1 border-t border-slate-800/80 bg-slate-950">
+          {(!sidebarCollapsed || isMobileOpen) ? (
+            <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-900/60 border border-slate-800">
+              <span className="text-[11px] font-semibold text-slate-400">Theme</span>
+              <div className="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setTheme('dark')}
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold transition-all cursor-pointer ${
+                    theme === 'dark'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Dark Mode (Default)"
+                >
+                  <Moon className="h-3 w-3" />
+                  <span>Dark</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTheme('light')}
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold transition-all cursor-pointer ${
+                    theme === 'light'
+                      ? 'bg-amber-500 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Light Mode"
+                >
+                  <Sun className="h-3 w-3" />
+                  <span>Light</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="w-full flex items-center justify-center p-2 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode (Default)'}
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-4 w-4 text-amber-400" />
+              ) : (
+                <Moon className="h-4 w-4 text-indigo-400" />
+              )}
+            </button>
+          )}
         </div>
 
         {/* Active Persona Profile Card */}

@@ -20,6 +20,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const { setOnlineStatus, token, setToken, currentUser } = useAppStore();
 
+  // Initialize theme from storage (default dark)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('samanvay-theme');
+      if (saved === 'light') {
+        useAppStore.getState().setTheme('light');
+      } else {
+        useAppStore.getState().setTheme('dark');
+      }
+    } catch {}
+  }, []);
+
   // Startup session initialization with race cancellation
   useEffect(() => {
     let isCurrent = true;

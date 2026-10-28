@@ -35,3 +35,148 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 116, 139, 0.8);
 }
+
+/* =========================================================================
+   LIGHT THEME MODE (DEFAULT IS DARK MODE)
+   ========================================================================= */
+
+html.light,
+html[data-theme="light"] {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+
+  /* Invert Slate scale for clean, elegant light government portal theme */
+  --color-slate-950: #f8fafc; /* Main Canvas Background (slate-50) */
+  --color-slate-900: #ffffff; /* Card / Panel / Header surface (pure white) */
+  --color-slate-850: #f1f5f9; /* Subtle elevated section */
+  --color-slate-800: #e2e8f0; /* Crisp Card / Divider borders (slate-200) */
+  --color-slate-700: #cbd5e1; /* Secondary borders (slate-300) */
+  --color-slate-600: #94a3b8; /* Muted borders */
+  --color-slate-500: #64748b; /* Secondary icons / metadata */
+  --color-slate-400: #475569; /* Muted descriptions & subtitles */
+  --color-slate-300: #334155; /* Secondary text */
+  --color-slate-200: #1e293b; /* Primary body text */
+  --color-slate-100: #0f172a; /* Strong headings & titles */
+
+  /* Light accents */
+  --color-blue-950: #eff6ff; /* Soft notice / ticker light blue */
+  --color-blue-900: #dbeafe;
+  --color-indigo-950: #eef2ff;
+  --color-emerald-950: #ecfdf5;
+  --color-rose-950: #fff1f2;
+  --color-amber-950: #fffbeb;
+}
+
+/* Scrollbar in Light Mode */
+html.light ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Light Mode Overrides for Headers, Cards, Tables, Forms */
+html.light body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html.light .bg-slate-950 {
+  background-color: #f8fafc !important;
+}
+
+html.light .bg-slate-900 {
+  background-color: #ffffff !important;
+}
+
+/* Semi-transparent slate backgrounds in light mode */
+html.light [class*="bg-slate-900/"] {
+  background-color: #ffffff !important;
+}
+
+html.light [class*="bg-slate-950/"] {
+  background-color: #ffffff !important;
+}
+
+/* Cards & Modals subtle elevation */
+html.light .rounded-xl.border,
+html.light .rounded-2xl.border {
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Modal dark dimmed backdrop */
+html.light [data-radix-portal] [class*="bg-slate-950/80"],
+html.light .fixed.inset-0[class*="bg-slate-950/80"] {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+}
+
+/* Headings with text-white should turn to dark slate in light mode */
+html.light .text-white {
+  color: #0f172a;
+}
+
+/* Retain pure white text for colored action buttons, gradients, pills and badges */
+html.light button.bg-blue-600,
+html.light button.bg-blue-500,
+html.light button.bg-indigo-600,
+html.light button.bg-rose-600,
+html.light button.bg-emerald-600,
+html.light [class*="bg-blue-600"],
+html.light [class*="bg-blue-500"],
+html.light [class*="bg-indigo-600"],
+html.light [class*="bg-rose-600"],
+html.light [class*="bg-emerald-600"],
+html.light [class*="from-blue-"],
+html.light [class*="from-indigo-"],
+html.light [class*="bg-blue-600"] *,
+html.light [class*="bg-blue-500"] *,
+html.light [class*="bg-indigo-600"] *,
+html.light [class*="bg-rose-600"] *,
+html.light [class*="bg-emerald-600"] *,
+html.light [class*="from-blue-"] *,
+html.light [class*="from-indigo-"] * {
+  color: #ffffff !important;
+}
+
+/* Ensure form controls are crisp and readable in Light Mode */
+html.light input:not([type="checkbox"]):not([type="radio"]),
+html.light select,
+html.light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* High-contrast badge text in light mode */
+html.light .text-blue-400 {
+  color: #1d4ed8;
+}
+html.light .text-emerald-400 {
+  color: #047857;
+}
+html.light .text-green-400 {
+  color: #15803d;
+}
+html.light .text-amber-400 {
+  color: #b45309;
+}
+html.light .text-rose-400 {
+  color: #be123c;
+}
+html.light .text-red-400 {
+  color: #b91c1c;
+}
+html.light .text-purple-400 {
+  color: #6d28d9;
+}
+html.light .text-cyan-400 {
+  color: #0e7490;
+}

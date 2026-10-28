@@ -23,6 +23,8 @@ import {
   HelpCircle,
   Eye,
   Menu,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 export const ExecutiveOverviewHeader: React.FC<{
@@ -57,6 +59,8 @@ export const ExecutiveOverviewHeader: React.FC<{
     language,
     setLanguage,
     userLocation,
+    theme,
+    toggleTheme,
   } = useAppStore();
 
   const [tickerIndex, setTickerIndex] = useState(0);
@@ -164,6 +168,25 @@ export const ExecutiveOverviewHeader: React.FC<{
             title="Toggle High Contrast"
           >
             <Eye className="h-3 w-3" />
+          </button>
+
+          {/* Theme Mode Toggle (Dark / Light) */}
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode (Default)'}
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun className="h-3 w-3 text-amber-400" />
+                <span>Light</span>
+              </>
+            ) : (
+              <>
+                <Moon className="h-3 w-3 text-indigo-400" />
+                <span>Dark</span>
+              </>
+            )}
           </button>
 
           {/* Audio Speech Reader (Accessibility) */}
@@ -309,6 +332,20 @@ export const ExecutiveOverviewHeader: React.FC<{
               <p className="text-xs font-bold text-white leading-tight">{currentUser.name}</p>
               <p className="text-[10px] text-blue-400 font-mono leading-tight">{currentUser.bureau}</p>
             </div>
+          </button>
+
+          {/* Theme Mode Toggle (Sun / Moon) */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800/80 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            aria-label={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme (Default)'}
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode (Default)'}
+          >
+            {theme === 'dark' ? (
+              <Sun className="h-4 w-4 text-amber-400 hover:rotate-45 transition-transform" />
+            ) : (
+              <Moon className="h-4 w-4 text-indigo-400 hover:-rotate-12 transition-transform" />
+            )}
           </button>
 
           {/* Notifications Toggle */}
