@@ -66,7 +66,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="bg-slate-950 text-slate-100 antialiased selection:bg-blue-600 selection:text-white font-sans transition-colors duration-200">
+      <body className="bg-slate-950 text-slate-100 antialiased font-sans transition-colors duration-200">
         <Providers>{children}</Providers>
       </body>
     </html>
