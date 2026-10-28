@@ -155,7 +155,10 @@ export default function Home() {
       </div>
 
       {/* Floating 24x7 Helpdesk AI Assistant */}
-      <AicteSahayakWidget onOpenLodge={() => handleOpenLodge(null)} />
+      <AicteSahayakWidget
+        onOpenLodge={() => handleOpenLodge(null)}
+        onOpenSearch={() => setIsSearchOpen(true)}
+      />
 
       {/* Global Modals & Drawers */}
       <LodgeComplaintModal

@@ -7,6 +7,7 @@ import { Button } from '../../shared/ui/Button';
 import { Modal } from '../../shared/ui/Modal';
 import { formatDate } from '../../shared/lib/date-utils';
 import { MOCK_COMPLAINTS } from '../../shared/api/mock-data';
+import { useComplaints } from '../../entities/complaint';
 import {
   Search,
   CheckCircle2,
@@ -34,13 +35,19 @@ export const TrackComplaintPage: React.FC<{
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
 
-  // Find complaint in mock complaints or default to first
+  const { data: complaintsData } = useComplaints();
+  const allComplaints =
+    complaintsData?.items && complaintsData.items.length > 0
+      ? complaintsData.items
+      : MOCK_COMPLAINTS;
+
+  // Find complaint in all complaints or default to first
   const complaint =
-    MOCK_COMPLAINTS.find(
+    allComplaints.find(
       (c) =>
         c.complaint_no.toLowerCase().includes(activeTrackingNo.trim().toLowerCase()) ||
         String(c.id) === activeTrackingNo.trim()
-    ) || MOCK_COMPLAINTS[0];
+    ) || allComplaints[0];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

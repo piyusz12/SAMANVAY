@@ -24,7 +24,8 @@ interface ChatMessage {
 
 export const AicteSahayakWidget: React.FC<{
   onOpenLodge: () => void;
-}> = ({ onOpenLodge }) => {
+  onOpenSearch?: () => void;
+}> = ({ onOpenLodge, onOpenSearch }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState('');
   const setActiveTab = useAppStore((s) => s.setActiveTab);
@@ -35,19 +36,36 @@ export const AicteSahayakWidget: React.FC<{
       sender: 'bot',
       text: 'Namaste! 🙏 I am AICTE Sahayak, your automated regulatory guidance assistant. How may I help you today?',
       actions: [
+        { label: 'Colleges Around Me (GPS Radar)', modal: 'search' },
         { label: 'Track Existing Complaint', tab: 'track' },
-        { label: 'Can college withhold my certificates?', tab: 'charter' },
-        { label: 'What is the fee refund policy?', tab: 'circulars' },
-        { label: 'Lodge New Grievance', modal: 'lodge' },
+        { label: 'Withholding Degree Certificates?', tab: 'charter' },
+        { label: 'Fee Refund Policy AY 2026-27', tab: 'circulars' },
+        { label: 'Register New Grievance', modal: 'lodge' },
       ],
     },
   ]);
 
   const quickResponses: Record<string, { answer: string; actions?: any[] }> = {
+    colleges: {
+      answer:
+        'SAMANVAY includes a live GPS Campus Proximity Radar indexed across 40+ premier technical institutions in India (including VNIT Nagpur, Ramdeobaba RCOEM, COEP Pune, IIT Bombay, and more). You can detect institutions within 25km, 50km, or 100km, check active cases, get directions, and directly register a case!',
+      actions: [
+        { label: 'Explore Nearby Colleges', modal: 'search' },
+        { label: 'View Institutions Registry', tab: 'institutions' },
+      ],
+    },
+    conflict: {
+      answer:
+        'The Master Conflicts Radar monitors multi-bureau collisions in real time. When an institution has simultaneous proceedings across PGRC, Regulation Bureau, or Legal Cell, the system alerts authorities and coordinates joint inquiries.',
+      actions: [
+        { label: 'View Conflicts Radar', tab: 'conflicts' },
+        { label: 'Inter-Bureau Workspaces', tab: 'coordination' },
+      ],
+    },
     certificate: {
       answer:
         'Under AICTE Gazette Notification No. 14-4/NC/2020, institutions are strictly forbidden from retaining original educational certificates (10th/12th/B.Tech/diploma) under any circumstances, even if fees are disputed. You may lodge a formal grievance under PGRC for immediate intervention.',
-      actions: [{ label: 'Lodge Fee/Certificate Complaint', modal: 'lodge' }],
+      actions: [{ label: 'Lodge Certificate Complaint', modal: 'lodge' }],
     },
     refund: {
       answer:
@@ -69,6 +87,16 @@ export const AicteSahayakWidget: React.FC<{
         'YES! Under Section 12 Whistleblower Protection, SAMANVAY allows confidential complaint lodging. Your name and contact details are encrypted and hidden from the respondent institution.',
       actions: [{ label: 'Lodge Confidential Grievance', modal: 'lodge' }],
     },
+    audit: {
+      answer:
+        'Every status transition, file transfer, and inquiry note is cryptographically signed and chained in an immutable SHA-256 event ledger, making records 100% tamper-evident and admissible before High Courts and tribunals.',
+      actions: [{ label: 'Inspect Cryptographic Audit Ledger', tab: 'audit' }],
+    },
+    lodge: {
+      answer:
+        'You can register a case against any AICTE-approved institution in seconds. Select the institution from the verified registry, describe the grievance, attach supporting evidence, and choose confidential whistleblower protection if desired.',
+      actions: [{ label: 'Register New Case', modal: 'lodge' }],
+    },
   };
 
   const handleSend = (userText: string) => {
@@ -86,7 +114,7 @@ export const AicteSahayakWidget: React.FC<{
     // Determine bot reply
     setTimeout(() => {
       const lower = userText.toLowerCase();
-      let matched = quickResponses.track;
+      let matched = quickResponses.colleges;
 
       if (lower.includes('cert') || lower.includes('degree') || lower.includes('withhold')) {
         matched = quickResponses.certificate;
@@ -96,6 +124,16 @@ export const AicteSahayakWidget: React.FC<{
         matched = quickResponses.ragging;
       } else if (lower.includes('anon') || lower.includes('confidential') || lower.includes('secret')) {
         matched = quickResponses.anonymous;
+      } else if (lower.includes('college') || lower.includes('nagpur') || lower.includes('pune') || lower.includes('near') || lower.includes('university') || lower.includes('around')) {
+        matched = quickResponses.colleges;
+      } else if (lower.includes('conflict') || lower.includes('overlap') || lower.includes('radar')) {
+        matched = quickResponses.conflict;
+      } else if (lower.includes('audit') || lower.includes('hash') || lower.includes('ledger') || lower.includes('sha')) {
+        matched = quickResponses.audit;
+      } else if (lower.includes('lodge') || lower.includes('register') || lower.includes('complaint') || lower.includes('file')) {
+        matched = quickResponses.lodge;
+      } else if (lower.includes('track') || lower.includes('status') || lower.includes('where is')) {
+        matched = quickResponses.track;
       }
 
       const botMsg: ChatMessage = {
@@ -115,6 +153,9 @@ export const AicteSahayakWidget: React.FC<{
       setIsOpen(false);
     } else if (action.modal === 'lodge') {
       onOpenLodge();
+      setIsOpen(false);
+    } else if (action.modal === 'search') {
+      onOpenSearch?.();
       setIsOpen(false);
     }
   };

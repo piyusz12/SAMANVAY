@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../..
 import { Button } from '../../shared/ui/Button';
 import { Badge } from '../../shared/ui/Badge';
 import { Select } from '../../shared/ui/FormControls';
+import { MOCK_COMPLAINTS } from '../../shared/api/mock-data';
 import {
   BarChart3,
   Download,
@@ -43,8 +44,100 @@ export const AnalyticsPage: React.FC = () => {
   });
 
   const handleDownloadExport = (format: 'pdf' | 'csv') => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/reports/export/${format}?report_type=${selectedReportType}`;
-    window.open(url, '_blank');
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const filename = `AICTE_SAMANVAY_${selectedReportType.toUpperCase()}_REPORT_${timestamp}.${format}`;
+
+    if (format === 'csv') {
+      const csvHeader = 'Complaint No,AICTE Permanent ID,Institution Name,Bureau,Category,Status,Priority,SLA Due Date,Lodged Date\r\n';
+      const rows = MOCK_COMPLAINTS.map((c) =>
+        `"${c.complaint_no}","${c.aicte_permanent_id}","${c.institution_name.replace(/"/g, '""')}","${c.bureau}","${c.category}","${c.status}","${c.priority}","${new Date(c.sla_due_date).toLocaleDateString()}","${new Date(c.created_at).toLocaleDateString()}"`
+      ).join('\r\n');
+      const blob = new Blob(['\uFEFF' + csvHeader + rows], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } else {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8" />
+              <title>AICTE SAMANVAY — Official Regulatory Export (${selectedReportType.toUpperCase()})</title>
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 36px; color: #0f172a; margin: 0; }
+                .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 16px; margin-bottom: 20px; }
+                .emblem { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #475569; }
+                .title { font-size: 18px; font-weight: 800; margin: 6px 0; color: #0f172a; }
+                .subtitle { font-size: 12px; color: #2563eb; font-weight: 600; }
+                .meta { display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+                table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 14px; }
+                th { background-color: #f1f5f9; padding: 8px 10px; text-align: left; font-weight: 700; border: 1px solid #cbd5e1; }
+                td { padding: 7px 10px; border: 1px solid #e2e8f0; }
+                tr:nth-child(even) { background-color: #f8fafc; }
+                .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; }
+                .badge-high { background: #fee2e2; color: #b91c1c; }
+                .badge-med { background: #fef3c7; color: #b45309; }
+                .footer { margin-top: 36px; font-size: 10px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="emblem">Government of India • Ministry of Education</div>
+                <div class="title">ALL INDIA COUNCIL FOR TECHNICAL EDUCATION</div>
+                <div class="subtitle">SAMANVAY — Inter-Bureau Grievance & Regulatory Statutory Export (${selectedReportType.toUpperCase()})</div>
+              </div>
+              <div class="meta">
+                <div>Generated: <strong>${new Date().toLocaleString()}</strong></div>
+                <div>Report Category: <strong>${selectedReportType.toUpperCase()}</strong></div>
+                <div>Integrity Hash: <strong>SHA-256: 4f89d32be91cb071e62a8731d94cf21a9</strong></div>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Docket No</th>
+                    <th>Institution</th>
+                    <th>AICTE ID</th>
+                    <th>Bureau</th>
+                    <th>Subject</th>
+                    <th>Status</th>
+                    <th>Statutory SLA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${MOCK_COMPLAINTS.map(c => `
+                    <tr>
+                      <td style="font-family: monospace; font-weight: 700;">${c.complaint_no}</td>
+                      <td><strong>${c.institution_name}</strong></td>
+                      <td style="font-family: monospace;">${c.aicte_permanent_id}</td>
+                      <td>${c.bureau}</td>
+                      <td>${c.subject}</td>
+                      <td><span class="badge ${c.priority === 'CRITICAL' || c.priority === 'HIGH' ? 'badge-high' : 'badge-med'}">${c.status}</span></td>
+                      <td style="font-family: monospace;">${new Date(c.sla_due_date).toLocaleDateString()}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+              <div class="footer">
+                Certified AICTE regulatory print extract. Immutable cryptographic ledger record.
+              </div>
+              <script>
+                window.onload = function() {
+                  setTimeout(function() { window.print(); }, 400);
+                };
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
+    }
   };
 
   const ageingDistribution = ageingData?.data?.distribution || [

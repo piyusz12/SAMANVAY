@@ -257,7 +257,7 @@ NATIONAL_COLLEGES_SEED = [
     },
     {
         "id": 3,
-        "aicte_id": "1-99887766",
+        "aicte_id": "1-99887755",
         "aishe_code": "C-27483",
         "name": "Delhi Institute of Technology & Management",
         "state": "Delhi",

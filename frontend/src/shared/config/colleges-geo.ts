@@ -543,7 +543,7 @@ export const NATIONAL_COLLEGES_DIRECTORY: CollegeGeoItem[] = [
     id: 3,
     name: 'Delhi Institute of Technology & Management',
     shortName: 'DITM Delhi',
-    aicte_id: '1-99887766',
+    aicte_id: '1-99887755',
     aishe_code: 'C-27483',
     category: 'Engineering & Technology',
     institution_type: 'Private-Self-Financed',

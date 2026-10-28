@@ -182,7 +182,7 @@ export const InstitutionsPage: React.FC<{
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-white font-mono">{comp.complaint_no}</span>
-                          <Badge variant="blue" size="sm">{comp.bureau_id}</Badge>
+                          <Badge variant="blue" size="sm">{comp.bureau || comp.bureau_id}</Badge>
                           <ComplaintStatusBadge status={comp.status} size="sm" />
                           <SlaBadge createdAt={comp.created_at} dueDate={comp.sla_due_date} status={comp.status} size="sm" />
                         </div>
