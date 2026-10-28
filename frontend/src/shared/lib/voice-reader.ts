@@ -56,3 +56,4 @@ export class VoiceReader {
     return !!this.synth && (this.synth.speaking || this.synth.pending);
   }
 }
+

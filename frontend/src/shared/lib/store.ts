@@ -44,6 +44,16 @@ export interface AppState {
   highContrast: boolean;
   language: 'en' | 'hi';
 
+  // User Geolocation for Proximity Discovery
+  userLocation: {
+    city: string;
+    state?: string;
+    latitude: number;
+    longitude: number;
+    displayName: string;
+    source: 'gps' | 'preset' | 'manual';
+  } | null;
+
   // Selected Entities
   selectedComplaintId: number | null;
   selectedInstitutionId: number | null;
@@ -64,6 +74,16 @@ export interface AppState {
   setFontSize: (size: 'normal' | 'large' | 'larger') => void;
   toggleHighContrast: () => void;
   setLanguage: (lang: 'en' | 'hi') => void;
+  setUserLocation: (
+    location: {
+      city: string;
+      state?: string;
+      latitude: number;
+      longitude: number;
+      displayName: string;
+      source: 'gps' | 'preset' | 'manual';
+    } | null
+  ) => void;
   setBureauFilter: (bureau: string) => void;
   setSearchQuery: (query: string) => void;
   setSelectedComplaintId: (id: number | null) => void;
@@ -88,6 +108,8 @@ export const useAppStore = create<AppState>((set) => ({
   fontSize: 'normal',
   highContrast: false,
   language: 'en',
+  userLocation: null,
+  setUserLocation: (userLocation) => set({ userLocation }),
 
   selectedComplaintId: null,
   selectedInstitutionId: null,

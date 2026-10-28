@@ -53,6 +53,7 @@ export const ExecutiveOverviewHeader: React.FC<{
     toggleHighContrast,
     language,
     setLanguage,
+    userLocation,
   } = useAppStore();
 
   const [tickerIndex, setTickerIndex] = useState(0);
@@ -226,7 +227,10 @@ export const ExecutiveOverviewHeader: React.FC<{
           >
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             <span className="truncate">
-              {searchQuery || 'Search by Institution, AICTE ID, or Complaint No...'}
+              {searchQuery ||
+                (userLocation
+                  ? `📍 Search colleges near ${userLocation.city}, AICTE ID, or cases...`
+                  : '📍 Search colleges near you, AICTE ID, or Complaint No...')}
             </span>
             <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono bg-slate-800 border border-slate-700 rounded text-slate-400 shadow-sm">
               ⌘K

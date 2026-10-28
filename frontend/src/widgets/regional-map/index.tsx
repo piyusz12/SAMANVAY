@@ -324,3 +324,4 @@ export const RegionalMapRadar: React.FC<{
     </Card>
   );
 };
+

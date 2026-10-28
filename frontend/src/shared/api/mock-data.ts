@@ -517,7 +517,49 @@ export function getMockFallback<T = any>(
     } as unknown as T;
   }
 
-  // 7. Bureaus
+  // 7. Unified Search
+  if (cleanEndpoint.startsWith('/api/v1/search/unified')) {
+    let q = '';
+    try {
+      const parsedUrl = new URL('http://dummy' + endpoint);
+      q = (parsedUrl.searchParams.get('q') || '').toLowerCase().trim();
+    } catch {
+      q = '';
+    }
+
+    const matchedInstitutions = MOCK_INSTITUTIONS.filter(
+      (i) =>
+        i.name.toLowerCase().includes(q) ||
+        i.aicte_permanent_id.toLowerCase().includes(q) ||
+        i.state.toLowerCase().includes(q) ||
+        (i.address && i.address.toLowerCase().includes(q))
+    ).map((i) => ({
+      id: i.id,
+      name: i.name,
+      aicte_id: i.aicte_permanent_id,
+      city: i.address.split(',').pop()?.trim() || i.state,
+      state: i.state,
+      region: i.region,
+      active_complaints_count: i.active_cases_count,
+      is_conflicting: i.has_conflict,
+    }));
+
+    const matchedComplaints = MOCK_COMPLAINTS.filter(
+      (c) =>
+        c.complaint_no.toLowerCase().includes(q) ||
+        c.subject.toLowerCase().includes(q) ||
+        c.institution_name.toLowerCase().includes(q) ||
+        c.description.toLowerCase().includes(q)
+    );
+
+    return {
+      complaints: matchedComplaints,
+      institutions: matchedInstitutions,
+      total_matches: matchedComplaints.length + matchedInstitutions.length,
+    } as unknown as T;
+  }
+
+  // 8. Bureaus
   if (cleanEndpoint === '/api/v1/bureaus') {
     return [
       { code: 'CENTRAL_ADMIN', name: 'Central Administration & AICTE HQ', default_sla_days: 15 },
