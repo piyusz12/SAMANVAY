@@ -322,8 +322,8 @@ export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
             aria-label="Search grievances, colleges, or reference numbers"
             placeholder={
               userLocation
-                ? `Search colleges near ${userLocation.city} (e.g. VNIT, IIT, COEP, DTU, RCOEM, BITS)...`
-                : 'Search college name, acronym (e.g. VNIT, IIT, DTU, COEP), city, AICTE ID, or Complaint No...'
+                ? `Search colleges near ${userLocation.city} (e.g. BIT Durg, CSVTU, VNIT, IIT, COEP, DTU)...`
+                : 'Search college name, acronym (e.g. BIT Durg, CSVTU, VNIT, IIT, DTU, RCOEM), city, AICTE ID...'
             }
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
