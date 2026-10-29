@@ -132,7 +132,14 @@ export const useAppStore = create<AppState>((set) => ({
   highContrast: false,
   language: 'en',
   theme: 'light', // Default is light mode ("let white one be the first expression")
-  userLocation: null,
+  userLocation: {
+    city: 'New Delhi',
+    state: 'Delhi',
+    latitude: 28.6139,
+    longitude: 77.2090,
+    displayName: 'AICTE Apex HQ (New Delhi)',
+    source: 'preset',
+  },
   setUserLocation: (userLocation) => set({ userLocation }),
 
   selectedComplaintId: null,

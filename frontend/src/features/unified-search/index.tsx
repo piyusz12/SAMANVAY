@@ -492,7 +492,8 @@ export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
               <SlidersHorizontal className="h-3 w-3 text-blue-400" />
               <span className="font-semibold text-slate-300">Radius:</span>
               {[
-                { label: 'Within 25 km', val: 25 },
+                { label: 'Within 10 km', val: 10 },
+                { label: '25 km', val: 25 },
                 { label: '50 km', val: 50 },
                 { label: '100 km', val: 100 },
                 { label: '250 km', val: 250 },
@@ -500,10 +501,11 @@ export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
               ].map((r) => (
                 <button
                   key={r.label}
+                  type="button"
                   onClick={() => setRadiusFilter(r.val as any)}
                   className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer ${
                     radiusFilter === r.val
-                      ? 'bg-blue-600 text-white shadow-sm'
+                      ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400 font-bold'
                       : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
                   }`}
                 >
@@ -528,9 +530,23 @@ export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
               ) : userLocation ? (
                 <span>
                   Showing institutions near <strong className="text-white">{userLocation.city}</strong>{' '}
-                  <span className="text-slate-500 font-normal">
-                    (sorted from closest to farthest)
-                  </span>
+                  {radiusFilter !== 'ALL' ? (
+                    <span className="inline-flex items-center gap-1 ml-1 text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-800/60 font-semibold text-[11px]">
+                      within {radiusFilter} km
+                      <button
+                        type="button"
+                        onClick={() => setRadiusFilter('ALL')}
+                        className="hover:text-white cursor-pointer ml-0.5"
+                        title="Clear radius filter"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ) : (
+                    <span className="text-slate-500 font-normal">
+                      (sorted closest to farthest)
+                    </span>
+                  )}
                 </span>
               ) : (
                 <span>All Recognized Technical Institutions (National Directory)</span>
@@ -546,22 +562,67 @@ export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
           {(filterType === 'colleges' || filterType === 'all') && (
             <div className="space-y-2.5">
               {nearbyColleges.length === 0 ? (
-                <div className="py-10 text-center text-xs text-slate-400 bg-slate-900/40 rounded-xl border border-slate-800/80 space-y-2">
+                <div className="py-10 text-center text-xs text-slate-400 bg-slate-900/40 rounded-xl border border-slate-800/80 space-y-3 px-4">
                   <Building2 className="h-8 w-8 text-slate-600 mx-auto" />
-                  <p className="font-bold text-slate-300">
-                    No technical institutions match &ldquo;{searchTerm}&rdquo;
-                  </p>
-                  <p className="text-slate-500 max-w-md mx-auto">
-                    Try searching by popular acronym (e.g. VNIT, IIT, DTU, COEP, RCOEM, BITS, VIT) or expanding your location.
-                  </p>
-                  {radiusFilter !== 'ALL' && (
-                    <button
-                      onClick={() => setRadiusFilter('ALL')}
-                      className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold cursor-pointer mt-2"
-                    >
-                      Show All India Institutions
-                    </button>
+                  {searchTerm.length > 0 ? (
+                    <div>
+                      <p className="font-bold text-slate-200 text-sm">
+                        No technical institutions match &ldquo;{searchTerm}&rdquo;
+                        {radiusFilter !== 'ALL' && userLocation && ` within ${radiusFilter} km of ${userLocation.city}`}
+                      </p>
+                      <p className="text-slate-400 text-xs mt-1 max-w-md mx-auto">
+                        Try searching by popular acronym (e.g. VNIT, IIT, DTU, COEP, RCOEM, BITS, VIT) or expanding your radius.
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="font-bold text-slate-200 text-sm">
+                        No technical institutions found within {radiusFilter} km of {userLocation?.city || 'your location'}
+                      </p>
+                      <p className="text-slate-400 text-xs mt-1 max-w-md mx-auto">
+                        There are premier technical colleges and universities located further in the surrounding region. Broaden your search radius:
+                      </p>
+                    </div>
                   )}
+
+                  <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
+                    {typeof radiusFilter === 'number' && radiusFilter < 50 && (
+                      <button
+                        type="button"
+                        onClick={() => setRadiusFilter(50)}
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                      >
+                        Expand to 50 km
+                      </button>
+                    )}
+                    {typeof radiusFilter === 'number' && radiusFilter < 100 && (
+                      <button
+                        type="button"
+                        onClick={() => setRadiusFilter(100)}
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                      >
+                        Expand to 100 km
+                      </button>
+                    )}
+                    {typeof radiusFilter === 'number' && radiusFilter < 250 && (
+                      <button
+                        type="button"
+                        onClick={() => setRadiusFilter(250)}
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                      >
+                        Expand to 250 km
+                      </button>
+                    )}
+                    {radiusFilter !== 'ALL' && (
+                      <button
+                        type="button"
+                        onClick={() => setRadiusFilter('ALL')}
+                        className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow cursor-pointer transition-colors"
+                      >
+                        Show All India Directory ({NATIONAL_COLLEGES_DIRECTORY.length} Institutions)
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-800/80 rounded-xl bg-slate-900/60 border border-slate-800 overflow-hidden">
