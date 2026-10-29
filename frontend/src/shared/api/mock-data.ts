@@ -189,6 +189,9 @@ export const MOCK_INSTITUTIONS = NATIONAL_COLLEGES_DIRECTORY.map((col) => {
     intakeCapacity: col.intakeCapacity,
     contact_phone: col.contact_phone,
     contact_email: col.contact_email,
+    domains: col.domains || ['Engineering & Technology'],
+    streams: col.streams || ['B.Tech Computer Science & Engineering', 'B.Tech AI & ML', 'B.Tech Mechanical'],
+    framework: col.framework || col.institution_type,
     created_at: new Date(Date.now() - 365 * 86400000).toISOString(),
   };
 });

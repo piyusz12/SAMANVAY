@@ -8,6 +8,8 @@ import {
   PRESET_LOCATIONS,
   NATIONAL_COLLEGES_DIRECTORY,
   INDIAN_PIN_CODE_INDEX,
+  AICTE_DOMAINS,
+  AICTE_FRAMEWORKS,
   getNearbyColleges,
   calculateDistanceKm,
   getCompassBearing,
@@ -69,6 +71,7 @@ export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
   const [customLocationInput, setCustomLocationInput] = useState('');
   const [radiusFilter, setRadiusFilter] = useState<number | 'ALL'>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
+  const [domainFilter, setDomainFilter] = useState<string>('ALL');
 
   // Debounce search term for backend grievance queries (200ms)
   useEffect(() => {
@@ -282,14 +285,14 @@ export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
     setCustomLocationInput('');
   };
 
-  // Zero-latency reactive keystroke calculation
+  // Zero-latency reactive keystroke calculation with domain & stream filtering
   const nearbyColleges = useMemo(() => {
     const coords = userLocation
       ? { lat: userLocation.latitude, lng: userLocation.longitude }
       : null;
 
-    return getNearbyColleges(searchTerm, coords, radiusFilter, categoryFilter);
-  }, [searchTerm, userLocation, radiusFilter, categoryFilter]);
+    return getNearbyColleges(searchTerm, coords, radiusFilter, categoryFilter, domainFilter);
+  }, [searchTerm, userLocation, radiusFilter, categoryFilter, domainFilter]);
 
   // Backend query for grievances & complaints matching search
   const { data: backendData } = useQuery<any>({
@@ -516,12 +519,36 @@ export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
           )}
         </div>
 
+        {/* AICTE Statutory Disciplines & Domains Bar */}
+        {filterType === 'colleges' && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-none pt-0.5">
+            <span className="text-[10px] uppercase font-bold text-slate-400 shrink-0 flex items-center gap-1">
+              <span>Discipline:</span>
+            </span>
+            {AICTE_DOMAINS.map((dom) => (
+              <button
+                key={dom.id}
+                type="button"
+                onClick={() => setDomainFilter(dom.id)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer shrink-0 flex items-center gap-1 ${
+                  domainFilter === dom.id
+                    ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-400 font-bold'
+                    : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800 hover:bg-slate-800'
+                }`}
+              >
+                <span>{dom.icon}</span>
+                <span>{dom.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* 4. Real-time Results Area */}
         <div className="max-h-[50vh] overflow-y-auto space-y-3 pr-1">
           {/* Header indicator */}
           <div className="flex items-center justify-between text-xs text-slate-400 px-1">
-            <span className="font-semibold flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+            <span className="font-semibold flex items-center gap-1.5 flex-wrap">
+              <Sparkles className="h-3.5 w-3.5 text-amber-400 shrink-0" />
               {searchTerm.length > 0 ? (
                 <span>
                   Real-time matches for &ldquo;<strong className="text-white">{searchTerm}</strong>&rdquo;
@@ -547,13 +574,26 @@ export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
                       (sorted closest to farthest)
                     </span>
                   )}
+                  {domainFilter !== 'ALL' && (
+                    <span className="inline-flex items-center gap-1 ml-1 text-indigo-300 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/60 font-semibold text-[11px]">
+                      {domainFilter}
+                      <button
+                        type="button"
+                        onClick={() => setDomainFilter('ALL')}
+                        className="hover:text-white cursor-pointer ml-0.5"
+                        title="Clear discipline filter"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
                 </span>
               ) : (
                 <span>All Recognized Technical Institutions (National Directory)</span>
               )}
             </span>
 
-            <span className="text-[11px] text-slate-500 font-mono">
+            <span className="text-[11px] text-slate-500 font-mono shrink-0">
               {nearbyColleges.length} institution{nearbyColleges.length === 1 ? '' : 's'}
             </span>
           </div>
@@ -720,6 +760,14 @@ export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
                             <span className="text-emerald-400 font-medium">
                               {col.institution_type}
                             </span>
+                            {col.framework && col.framework !== col.institution_type && (
+                              <>
+                                <span className="text-slate-600">•</span>
+                                <span className="text-purple-300 font-mono text-[10px] bg-purple-950/60 px-1.5 py-0.5 rounded border border-purple-800/40">
+                                  🏛️ {col.framework}
+                                </span>
+                              </>
+                            )}
                             <span className="text-slate-600">•</span>
                             <span>{col.category}</span>
                             {col.accreditation && (
@@ -739,6 +787,35 @@ export const UnifiedSearchModal: React.FC<UnifiedSearchModalProps> = ({
                               </>
                             )}
                           </div>
+
+                          {/* AICTE Statutory Domains & Approved Streams */}
+                          {col.domains && col.domains.length > 0 && (
+                            <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                              {col.domains.map((dom) => (
+                                <span
+                                  key={dom}
+                                  className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-950/80 border border-indigo-700/60 text-indigo-300 flex items-center gap-1"
+                                >
+                                  <span>{
+                                    dom.includes('Engineering') ? '⚙️' :
+                                    dom.includes('Management') ? '💼' :
+                                    dom.includes('Computer') ? '💻' :
+                                    dom.includes('Pharmacy') ? '💊' :
+                                    dom.includes('Architecture') ? '🏛️' :
+                                    dom.includes('Applied') ? '🎨' : '🎓'
+                                  }</span>
+                                  <span>{dom}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          {col.streams && col.streams.length > 0 && (
+                            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1 overflow-hidden text-ellipsis whitespace-nowrap max-w-xl pt-0.5">
+                              <span className="text-slate-500 font-bold uppercase text-[9px] shrink-0">Streams:</span>
+                              <span className="truncate">{col.streams.slice(0, 4).join(' • ')}{col.streams.length > 4 ? ` +${col.streams.length - 4} more` : ''}</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Action Buttons */}

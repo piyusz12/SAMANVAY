@@ -5,13 +5,26 @@ export interface Institution {
   id: number;
   aicte_permanent_id: string;
   name: string;
+  shortName?: string;
   address?: string;
   city?: string;
   state?: string;
   district?: string;
+  region?: string;
+  pin_code?: string;
   status: string;
   aishe_code?: string;
   created_at: string;
+  category?: string;
+  domains?: string[];
+  streams?: string[];
+  framework?: string;
+  nirfRank?: string;
+  accreditation?: string;
+  intakeCapacity?: number;
+  website?: string;
+  contact_phone?: string;
+  contact_email?: string;
 }
 
 export interface InstitutionDossier {

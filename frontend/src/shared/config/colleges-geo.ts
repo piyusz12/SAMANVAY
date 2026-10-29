@@ -33,7 +33,32 @@ export interface CollegeGeoItem {
   active_bureaus?: string[];
   contact_phone?: string;
   contact_email?: string;
+  // AICTE Statutory Classification & Regulatory Structure
+  domains?: string[];
+  streams?: string[];
+  framework?: string;
 }
+
+export const AICTE_DOMAINS = [
+  { id: 'ALL', label: 'All Disciplines', icon: '🎓' },
+  { id: 'Engineering & Technology', label: 'Engineering & Technology', icon: '⚙️' },
+  { id: 'Management & Business', label: 'Management & Business (MBA/PGDM)', icon: '💼' },
+  { id: 'Computer Applications', label: 'Computer Applications (MCA/BCA)', icon: '💻' },
+  { id: 'Pharmacy', label: 'Pharmacy (B.Pharm/M.Pharm)', icon: '💊' },
+  { id: 'Architecture & Planning', label: 'Architecture & Planning (B.Arch)', icon: '🏛️' },
+  { id: 'Hotel Management & Catering', label: 'Hotel Management (HMCT)', icon: '🏨' },
+  { id: 'Applied Arts, Crafts & Design', label: 'Applied Arts & Design (B.Des)', icon: '🎨' },
+] as const;
+
+export const AICTE_FRAMEWORKS = [
+  'ALL',
+  'Institute of National Importance',
+  'Central University',
+  'State Government / Aided',
+  'State Autonomous University',
+  'Deemed-to-be University (IoE)',
+  'Private Self-Financing Institute',
+] as const;
 
 export interface PresetLocation {
   id: string;
@@ -2629,6 +2654,226 @@ export const NATIONAL_COLLEGES_DIRECTORY: CollegeGeoItem[] = [
 ];
 
 /**
+ * Resolves AICTE Statutory Disciplines (Domains), Academic Programs (Streams),
+ * and Institutional University Governance Framework for any technical institution.
+ */
+export function resolveCollegeClassification(col: Partial<CollegeGeoItem>): {
+  domains: string[];
+  streams: string[];
+  framework: string;
+} {
+  if (col.domains && col.streams && col.framework) {
+    return { domains: col.domains, streams: col.streams, framework: col.framework };
+  }
+
+  const name = (col.name || '').toLowerCase();
+  const short = (col.shortName || '').toLowerCase();
+  const type = (col.institution_type || '').toLowerCase();
+
+  // 1. Institutional Governance Framework
+  let framework = 'Private Self-Financing Institute';
+  if (
+    type.includes('national importance') ||
+    name.includes('iit') ||
+    name.includes('nit ') ||
+    name.includes('iiit') ||
+    name.includes('iisc')
+  ) {
+    framework = 'Institute of National Importance';
+  } else if (
+    type.includes('central university') ||
+    name.includes('jamia') ||
+    name.includes('jnu') ||
+    name.includes('amu') ||
+    name.includes('bhu')
+  ) {
+    framework = 'Central University';
+  } else if (
+    type.includes('deemed') ||
+    name.includes('bits pilani') ||
+    name.includes('manipal') ||
+    name.includes('thapar') ||
+    name.includes('vit') ||
+    name.includes('kiit') ||
+    name.includes('srm') ||
+    name.includes('amrita')
+  ) {
+    framework = 'Deemed-to-be University (IoE)';
+  } else if (
+    type.includes('state autonomous') ||
+    type.includes('technical university') ||
+    name.includes('hbtu') ||
+    name.includes('aktu') ||
+    name.includes('jntu') ||
+    name.includes('outr') ||
+    name.includes('vssut') ||
+    name.includes('coep') ||
+    name.includes('pdeu')
+  ) {
+    framework = 'State Autonomous University';
+  } else if (
+    type.includes('government') ||
+    type.includes('constituent') ||
+    name.includes('vjti') ||
+    name.includes('ceg') ||
+    name.includes('pec') ||
+    name.includes('gcoen') ||
+    name.includes('gcoea') ||
+    name.includes('ldce') ||
+    name.includes('sgsits') ||
+    name.includes('cet') ||
+    name.includes('gec') ||
+    name.includes('auce') ||
+    name.includes('aec')
+  ) {
+    framework = 'State Government / Aided';
+  }
+
+  // 2. AICTE Statutory Domains & Approved Programs (Streams)
+  const domains: string[] = ['Engineering & Technology'];
+  let streams: string[] = [
+    'B.Tech / B.E. Computer Science & Engineering',
+    'B.Tech Artificial Intelligence & Machine Learning',
+    'B.Tech Electronics & Communication Engineering',
+    'B.Tech Mechanical Engineering',
+    'B.Tech Electrical & Electronics Engineering',
+  ];
+
+  if (name.includes('polytechnic')) {
+    streams = [
+      'Diploma Mechanical Engineering',
+      'Diploma Electrical Engineering',
+      'Diploma Civil Engineering',
+      'Diploma Electronics & Telecommunication',
+      'Diploma Computer Technology',
+    ];
+  } else if (name.includes('chemical') || name.includes('laxminarayan') || short.includes('lit')) {
+    streams = [
+      'B.Tech Chemical Engineering',
+      'B.Tech Petrochemical & Petroleum Refining',
+      'B.Tech Food Technology',
+      'B.Tech Surface Coating & Polymer Technology',
+      'B.Tech Plastic & Polymer Engineering',
+    ];
+  } else {
+    // Management & Business (MBA / PGDM)
+    if (
+      name.includes('iit') ||
+      name.includes('nit') ||
+      name.includes('bits') ||
+      name.includes('vit') ||
+      name.includes('thapar') ||
+      name.includes('manipal') ||
+      name.includes('kiit') ||
+      name.includes('srm') ||
+      name.includes('dtu') ||
+      name.includes('nsut') ||
+      name.includes('coep') ||
+      name.includes('rcoem') ||
+      name.includes('rvce') ||
+      name.includes('bmsce') ||
+      name.includes('psg') ||
+      name.includes('jamia') ||
+      name.includes('jnu') ||
+      name.includes('aktu') ||
+      name.includes('hbtu') ||
+      name.includes('amrita') ||
+      name.includes('nirma') ||
+      name.includes('pes')
+    ) {
+      domains.push('Management & Business');
+      streams.push('Master of Business Administration (MBA / PGDM)');
+    }
+
+    // Computer Applications (MCA / BCA)
+    if (
+      name.includes('nit') ||
+      name.includes('vit') ||
+      name.includes('coep') ||
+      name.includes('rcoem') ||
+      name.includes('rvce') ||
+      name.includes('bmsce') ||
+      name.includes('pict') ||
+      name.includes('jss') ||
+      name.includes('akgec') ||
+      name.includes('kiit') ||
+      name.includes('srm') ||
+      name.includes('thapar') ||
+      name.includes('iet') ||
+      name.includes('mnnit') ||
+      name.includes('jamia') ||
+      name.includes('msrit') ||
+      name.includes('cusat')
+    ) {
+      domains.push('Computer Applications');
+      streams.push('Master of Computer Applications (MCA)');
+    }
+
+    // Architecture & Planning (B.Arch / M.Plan)
+    if (
+      name.includes('roorkee') ||
+      name.includes('vnit') ||
+      name.includes('iit kharagpur') ||
+      name.includes('ceg') ||
+      name.includes('jamia') ||
+      name.includes('vit') ||
+      name.includes('manipal') ||
+      name.includes('msrit') ||
+      name.includes('bms') ||
+      name.includes('kiit') ||
+      name.includes('manit') ||
+      name.includes('nit trichy') ||
+      name.includes('nit calicut') ||
+      name.includes('outr') ||
+      name.includes('cet')
+    ) {
+      domains.push('Architecture & Planning');
+      streams.push('Bachelor of Architecture (B.Arch)');
+      streams.push('Master of Urban & Regional Planning (M.Plan)');
+    }
+
+    // Pharmacy (B.Pharm / M.Pharm)
+    if (
+      name.includes('bits pilani') ||
+      name.includes('manipal') ||
+      name.includes('jamia') ||
+      name.includes('bhu') ||
+      name.includes('sgsits') ||
+      name.includes('nirma')
+    ) {
+      domains.push('Pharmacy');
+      streams.push('Bachelor of Pharmacy (B.Pharm)');
+      streams.push('Master of Pharmacy (M.Pharm)');
+    }
+
+    // Applied Arts, Crafts & Design (B.Des / M.Des)
+    if (
+      name.includes('iit bombay') ||
+      name.includes('iit delhi') ||
+      name.includes('iit guwahati') ||
+      name.includes('iiit') ||
+      name.includes('bits') ||
+      name.includes('dtu') ||
+      name.includes('pes')
+    ) {
+      domains.push('Applied Arts, Crafts & Design');
+      streams.push('Bachelor of Design (B.Des)');
+      streams.push('Master of Design (M.Des)');
+    }
+  }
+
+  return { domains, streams, framework };
+}
+
+// Automatically enrich every college in the national directory with statutory domains, streams, and frameworks
+NATIONAL_COLLEGES_DIRECTORY.forEach((col) => {
+  const cls = resolveCollegeClassification(col);
+  col.domains = col.domains || cls.domains;
+  col.streams = col.streams || cls.streams;
+  col.framework = col.framework || cls.framework;
+});
+
+/**
  * Calculates Great-Circle (Haversine) Distance between two geographic points in kilometers.
  */
 export function calculateDistanceKm(
@@ -2703,14 +2948,15 @@ export function findNearestPreset(lat: number, lng: number): PresetLocation {
 
 /**
  * Filters and ranks technical colleges based on real-time keystroke query,
- * user coordinates, radius boundaries, and category filters.
- * GUARANTEE: Never truncates to an empty list when user coordinates are present!
+ * user coordinates, radius boundaries, statutory domain filters, and university frameworks.
  */
 export function getNearbyColleges(
   searchQuery: string,
   userCoords?: { lat: number; lng: number } | null,
   radiusKm?: number | 'ALL',
-  categoryFilter?: string
+  categoryFilter?: string,
+  domainFilter?: string,
+  frameworkFilter?: string
 ): (CollegeGeoItem & { distanceKm?: number; compassBearing?: string })[] {
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -2740,14 +2986,33 @@ export function getNearbyColleges(
     };
   });
 
-  // 2. Filter by category if chosen
+  // 2. Filter by Category if chosen
   if (categoryFilter && categoryFilter !== 'ALL') {
     list = list.filter((col) =>
       col.category.toLowerCase().includes(categoryFilter.toLowerCase())
     );
   }
 
-  // 3. Real-time Search Term Matching (Keystroke-level reactive match)
+  // 3. Filter by AICTE Statutory Domain if chosen
+  if (domainFilter && domainFilter !== 'ALL') {
+    const dLower = domainFilter.toLowerCase();
+    list = list.filter((col) =>
+      col.domains?.some((dom) => dom.toLowerCase().includes(dLower) || dLower.includes(dom.toLowerCase())) ||
+      col.category.toLowerCase().includes(dLower) ||
+      col.streams?.some((st) => st.toLowerCase().includes(dLower))
+    );
+  }
+
+  // 4. Filter by University Governance Framework if chosen
+  if (frameworkFilter && frameworkFilter !== 'ALL') {
+    const fLower = frameworkFilter.toLowerCase();
+    list = list.filter((col) =>
+      (col.framework && col.framework.toLowerCase().includes(fLower)) ||
+      col.institution_type.toLowerCase().includes(fLower)
+    );
+  }
+
+  // 5. Real-time Search Term Matching (Keystroke-level reactive match across name, domain, stream, location)
   if (normalizedQuery.length > 0) {
     list = list.filter((col) => {
       const matchName = col.name.toLowerCase().includes(normalizedQuery);
@@ -2760,6 +3025,9 @@ export function getNearbyColleges(
       const matchType = col.institution_type.toLowerCase().includes(normalizedQuery);
       const matchAddress = col.address.toLowerCase().includes(normalizedQuery);
       const matchPin = col.pin_code.includes(normalizedQuery);
+      const matchDomain = col.domains?.some((d) => d.toLowerCase().includes(normalizedQuery));
+      const matchStream = col.streams?.some((s) => s.toLowerCase().includes(normalizedQuery));
+      const matchFramework = col.framework?.toLowerCase().includes(normalizedQuery);
 
       return (
         matchName ||
@@ -2771,17 +3039,20 @@ export function getNearbyColleges(
         matchCategory ||
         matchType ||
         matchAddress ||
-        matchPin
+        matchPin ||
+        matchDomain ||
+        matchStream ||
+        matchFramework
       );
     });
   }
 
-  // 4. Reactive Radius Filter: When a radius limit is chosen, strictly filter institutions within radius
+  // 6. Reactive Radius Filter: When a radius limit is chosen, strictly filter institutions within radius
   if (userCoords && radiusKm && radiusKm !== 'ALL') {
     list = list.filter((col) => col.distanceKm !== undefined && col.distanceKm <= radiusKm);
   }
 
-  // 5. Intelligent Multi-Criteria Sorting (Closest First)
+  // 7. Intelligent Multi-Criteria Sorting (Closest First)
   list.sort((a, b) => {
     // If search query is present, prioritize exact name matches first
     if (normalizedQuery.length > 0) {
