@@ -3,6 +3,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../shared/api/api-client';
+import { MOCK_CONFLICTS } from '../../shared/api/mock-data';
 import { useAppStore } from '../../shared/lib/store';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../shared/ui/Card';
 import { Badge } from '../../shared/ui/Badge';
@@ -15,7 +16,8 @@ export const ConflictRadarWidget: React.FC<{ onSelectInstitution: (id: number) =
   const { data: conflicts = [], isLoading, isError, refetch } = useQuery<any[]>({
     queryKey: ['conflicts', 'overlapping'],
     queryFn: () => apiClient.get<any[]>('/api/v1/conflicts/overlapping'),
-    staleTime: 1000 * 30,
+    initialData: MOCK_CONFLICTS,
+    staleTime: 1000 * 60 * 5,
   });
 
   return (

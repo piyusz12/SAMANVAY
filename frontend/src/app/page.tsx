@@ -1,34 +1,109 @@
 'use client';
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useAppStore } from '../shared/lib/store';
 import { GlobalNavigationSidebar } from '../widgets/navigation-sidebar';
 import { ExecutiveOverviewHeader } from '../widgets/overview-header';
-import { NotificationCenterDrawer } from '../widgets/notification-center';
 import { PortalFooter } from '../widgets/portal-footer';
-import { AicteSahayakWidget } from '../widgets/ai-sahayak';
 
-// FSD Views
+// 1. Primary Landing View (Loaded eagerly for instant FCP)
 import { DashboardPage } from '../views/dashboard';
-import { ComplaintsPage } from '../views/complaints';
-import { InstitutionsPage } from '../views/institutions';
-import { ConflictsPage } from '../views/conflicts';
-import { CoordinationPage } from '../views/coordination';
-import { AnalyticsPage } from '../views/analytics';
-import { AuditPage } from '../views/audit';
-import { TrackComplaintPage } from '../views/track-complaint';
-import { CitizensCharterPage } from '../views/citizens-charter';
-import { CircularsPage } from '../views/circulars';
 
-// Features / Modals
-import { LodgeComplaintModal } from '../features/lodge-complaint';
-import { PersonaSwitcherModal } from '../features/auth';
-import { OverlapReviewModal } from '../features/overlap-review';
-import { StatusTransitionModal } from '../features/status-transition';
-import { TransferFileModal } from '../features/transfer-file';
-import { ComplaintDetailModal } from '../features/complaint-detail';
-import { HealthStatusModal } from '../features/health-status';
-import { UnifiedSearchModal } from '../features/unified-search';
+// Skeleton fallback for lazy views
+const ViewSkeleton = () => (
+  <div className="space-y-4 animate-pulse py-2">
+    <div className="h-8 bg-slate-800/40 rounded-lg w-1/4" />
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="h-24 bg-slate-800/40 rounded-xl" />
+      <div className="h-24 bg-slate-800/40 rounded-xl" />
+      <div className="h-24 bg-slate-800/40 rounded-xl" />
+      <div className="h-24 bg-slate-800/40 rounded-xl" />
+    </div>
+    <div className="h-72 bg-slate-800/40 rounded-xl" />
+  </div>
+);
+
+// 2. Secondary Tab Views (Lazy loaded on demand with code-splitting)
+const TrackComplaintPage = dynamic(
+  () => import('../views/track-complaint').then((m) => m.TrackComplaintPage),
+  { ssr: false, loading: ViewSkeleton }
+);
+const CitizensCharterPage = dynamic(
+  () => import('../views/citizens-charter').then((m) => m.CitizensCharterPage),
+  { ssr: false, loading: ViewSkeleton }
+);
+const CircularsPage = dynamic(
+  () => import('../views/circulars').then((m) => m.CircularsPage),
+  { ssr: false, loading: ViewSkeleton }
+);
+const ComplaintsPage = dynamic(
+  () => import('../views/complaints').then((m) => m.ComplaintsPage),
+  { ssr: false, loading: ViewSkeleton }
+);
+const InstitutionsPage = dynamic(
+  () => import('../views/institutions').then((m) => m.InstitutionsPage),
+  { ssr: false, loading: ViewSkeleton }
+);
+const ConflictsPage = dynamic(
+  () => import('../views/conflicts').then((m) => m.ConflictsPage),
+  { ssr: false, loading: ViewSkeleton }
+);
+const CoordinationPage = dynamic(
+  () => import('../views/coordination').then((m) => m.CoordinationPage),
+  { ssr: false, loading: ViewSkeleton }
+);
+const AnalyticsPage = dynamic(
+  () => import('../views/analytics').then((m) => m.AnalyticsPage),
+  { ssr: false, loading: ViewSkeleton }
+);
+const AuditPage = dynamic(
+  () => import('../views/audit').then((m) => m.AuditPage),
+  { ssr: false, loading: ViewSkeleton }
+);
+
+// 3. Modals, Drawers & Floating Widgets (Lazy loaded only when user triggers them)
+const LodgeComplaintModal = dynamic(
+  () => import('../features/lodge-complaint').then((m) => m.LodgeComplaintModal),
+  { ssr: false }
+);
+const PersonaSwitcherModal = dynamic(
+  () => import('../features/auth').then((m) => m.PersonaSwitcherModal),
+  { ssr: false }
+);
+const OverlapReviewModal = dynamic(
+  () => import('../features/overlap-review').then((m) => m.OverlapReviewModal),
+  { ssr: false }
+);
+const StatusTransitionModal = dynamic(
+  () => import('../features/status-transition').then((m) => m.StatusTransitionModal),
+  { ssr: false }
+);
+const TransferFileModal = dynamic(
+  () => import('../features/transfer-file').then((m) => m.TransferFileModal),
+  { ssr: false }
+);
+const ComplaintDetailModal = dynamic(
+  () => import('../features/complaint-detail').then((m) => m.ComplaintDetailModal),
+  { ssr: false }
+);
+const HealthStatusModal = dynamic(
+  () => import('../features/health-status').then((m) => m.HealthStatusModal),
+  { ssr: false }
+);
+const UnifiedSearchModal = dynamic(
+  () => import('../features/unified-search').then((m) => m.UnifiedSearchModal),
+  { ssr: false }
+);
+const NotificationCenterDrawer = dynamic(
+  () => import('../widgets/notification-center').then((m) => m.NotificationCenterDrawer),
+  { ssr: false }
+);
+const AicteSahayakWidget = dynamic(
+  () => import('../widgets/ai-sahayak').then((m) => m.AicteSahayakWidget),
+  { ssr: false }
+);
+
 import {
   LayoutDashboard,
   Compass,
@@ -232,38 +307,48 @@ export default function Home() {
         onOpenSearch={() => setIsSearchOpen(true)}
       />
 
-      {/* Global Modals & Drawers */}
-      <LodgeComplaintModal
-        isOpen={isLodgeOpen}
-        onClose={() => {
-          setIsLodgeOpen(false);
-          setPreselectedInstitutionId(null);
-        }}
-        initialInstitutionId={preselectedInstitutionId}
-      />
+      {/* Global Modals & Drawers — Mount on-demand to save memory and DOM nodes */}
+      {isLodgeOpen && (
+        <LodgeComplaintModal
+          isOpen={true}
+          onClose={() => {
+            setIsLodgeOpen(false);
+            setPreselectedInstitutionId(null);
+          }}
+          initialInstitutionId={preselectedInstitutionId}
+        />
+      )}
 
-      <PersonaSwitcherModal
-        isOpen={isPersonaOpen}
-        onClose={() => setIsPersonaOpen(false)}
-      />
+      {isPersonaOpen && (
+        <PersonaSwitcherModal
+          isOpen={true}
+          onClose={() => setIsPersonaOpen(false)}
+        />
+      )}
 
-      <NotificationCenterDrawer
-        isOpen={isNotificationsOpen}
-        onClose={() => setIsNotificationsOpen(false)}
-      />
+      {isNotificationsOpen && (
+        <NotificationCenterDrawer
+          isOpen={true}
+          onClose={() => setIsNotificationsOpen(false)}
+        />
+      )}
 
-      <HealthStatusModal
-        isOpen={isHealthOpen}
-        onClose={() => setIsHealthOpen(false)}
-      />
+      {isHealthOpen && (
+        <HealthStatusModal
+          isOpen={true}
+          onClose={() => setIsHealthOpen(false)}
+        />
+      )}
 
-      <UnifiedSearchModal
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        onSelectComplaint={handleSelectComplaint}
-        onSelectInstitution={handleSelectInstitution}
-        onLodgeComplaintForInstitution={(id) => handleOpenLodge(id)}
-      />
+      {isSearchOpen && (
+        <UnifiedSearchModal
+          isOpen={true}
+          onClose={() => setIsSearchOpen(false)}
+          onSelectComplaint={handleSelectComplaint}
+          onSelectInstitution={handleSelectInstitution}
+          onLodgeComplaintForInstitution={(id) => handleOpenLodge(id)}
+        />
+      )}
 
       {detailComplaintId !== null && (
         <ComplaintDetailModal

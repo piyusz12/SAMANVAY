@@ -3,6 +3,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../shared/api/api-client';
+import { MOCK_COMPLAINTS } from '../../shared/api/mock-data';
 import { Badge } from '../../shared/ui/Badge';
 import { COMPLAINT_STATUSES } from '../../shared/config/constants';
 import { calculateSla } from '../../shared/lib/date-utils';
@@ -58,7 +59,11 @@ export function useComplaints(filters?: {
       }
       return { items: res.items || [], total: res.total || 0 };
     },
-    staleTime: 1000 * 30,
+    initialData:
+      !filters || Object.values(filters).every((v) => v === undefined)
+        ? { items: MOCK_COMPLAINTS as unknown as Complaint[], total: MOCK_COMPLAINTS.length }
+        : undefined,
+    staleTime: 1000 * 60 * 5,
   });
 }
 

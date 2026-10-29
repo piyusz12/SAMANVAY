@@ -21,9 +21,13 @@ export class ApiError extends Error {
   }
 }
 
+// Inflight GET request deduplication map to prevent redundant concurrent queries
+const inflightGetRequests = new Map<string, Promise<any>>();
+
 async function request<T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { params, headers, ...restOptions } = options;
+  const { params, headers, signal, ...restOptions } = options;
   const store = useAppStore.getState();
+  const isGet = !options.method || options.method.toUpperCase() === 'GET';
 
   // If offline and making a state-mutating request, reject cleanly to prevent silent loss
   if (!store.isOnline && options.method && ['POST', 'PATCH', 'PUT', 'DELETE'].includes(options.method.toUpperCase())) {
@@ -45,6 +49,12 @@ async function request<T = any>(endpoint: string, options: RequestOptions = {}):
     }
   }
 
+  // Inflight request deduplication for concurrent GETs
+  const cacheKey = isGet ? `${url}__${store.token || ''}` : '';
+  if (cacheKey && inflightGetRequests.has(cacheKey)) {
+    return inflightGetRequests.get(cacheKey)!;
+  }
+
   // Build headers
   const reqHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -56,63 +66,82 @@ async function request<T = any>(endpoint: string, options: RequestOptions = {}):
     reqHeaders['Authorization'] = `Bearer ${store.token}`;
   }
 
-  try {
-    const response = await fetch(url, {
-      headers: reqHeaders,
-      ...restOptions,
-    });
+  const executeRequest = async (): Promise<T> => {
+    // 2500ms timeout controller to prevent stalled networks from blocking UI interaction
+    const timeoutController = new AbortController();
+    const timeoutTimer = setTimeout(() => timeoutController.abort(), 2500);
 
-    if (!response.ok) {
-      // If the backend returns 404 (e.g. Vercel private DNS error or unconfigured route) or 5xx, try demo fallback
-      if (response.status === 404 || response.status >= 500) {
-        const fallback = getMockFallback<T>(endpoint, options.method || 'GET', options.body, params);
-        if (fallback !== undefined) {
-          return fallback;
+    try {
+      const response = await fetch(url, {
+        headers: reqHeaders,
+        signal: signal || timeoutController.signal,
+        ...restOptions,
+      });
+      clearTimeout(timeoutTimer);
+
+      if (!response.ok) {
+        // If the backend returns 404 (e.g. Vercel private DNS error or unconfigured route) or 5xx, try demo fallback
+        if (response.status === 404 || response.status >= 500) {
+          const fallback = getMockFallback<T>(endpoint, options.method || 'GET', options.body, params);
+          if (fallback !== undefined) {
+            return fallback;
+          }
         }
+
+        const rawText = await response.text();
+        let errorBody: any = rawText;
+        try {
+          errorBody = JSON.parse(rawText);
+        } catch {
+          // Keep raw text if not valid JSON
+        }
+        const raw =
+          typeof errorBody === 'object' && errorBody !== null ? errorBody.detail || errorBody.message : undefined;
+        let message: string;
+        if (Array.isArray(raw)) {
+          message = raw
+            .map((d: any) => (d && typeof d === 'object' && d.msg ? d.msg : JSON.stringify(d)))
+            .join('; ');
+        } else if (typeof raw === 'string') {
+          message = raw;
+        } else if (raw) {
+          message = JSON.stringify(raw);
+        } else {
+          message = rawText || `Request failed with status ${response.status}`;
+        }
+        throw new ApiError(response.status, message, errorBody);
       }
 
-      const rawText = await response.text();
-      let errorBody: any = rawText;
-      try {
-        errorBody = JSON.parse(rawText);
-      } catch {
-        // Keep raw text if not valid JSON
+      if (response.status === 204) {
+        return {} as T;
       }
-      const raw =
-        typeof errorBody === 'object' && errorBody !== null ? errorBody.detail || errorBody.message : undefined;
-      let message: string;
-      if (Array.isArray(raw)) {
-        message = raw
-          .map((d: any) => (d && typeof d === 'object' && d.msg ? d.msg : JSON.stringify(d)))
-          .join('; ');
-      } else if (typeof raw === 'string') {
-        message = raw;
-      } else if (raw) {
-        message = JSON.stringify(raw);
-      } else {
-        message = rawText || `Request failed with status ${response.status}`;
+
+      return await response.json();
+    } catch (error: any) {
+      clearTimeout(timeoutTimer);
+      if (error instanceof ApiError) throw error;
+      // Network failure / server offline / timeout -> attempt mock fallback first
+      const fallback = getMockFallback<T>(endpoint, options.method || 'GET', options.body, params);
+      if (fallback !== undefined) {
+        return fallback;
       }
-      throw new ApiError(response.status, message, errorBody);
+      // Network failure -> Check if offline
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        store.setOnlineStatus(false);
+      }
+      throw new ApiError(0, error.message || 'Network communication failure');
     }
+  };
 
-    if (response.status === 204) {
-      return {} as T;
-    }
-
-    return await response.json();
-  } catch (error: any) {
-    if (error instanceof ApiError) throw error;
-    // Network failure / server offline -> attempt mock fallback first
-    const fallback = getMockFallback<T>(endpoint, options.method || 'GET', options.body, params);
-    if (fallback !== undefined) {
-      return fallback;
-    }
-    // Network failure -> Check if offline
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      store.setOnlineStatus(false);
-    }
-    throw new ApiError(0, error.message || 'Network communication failure');
+  if (cacheKey) {
+    const promise = executeRequest().finally(() => {
+      inflightGetRequests.delete(cacheKey);
+    });
+    inflightGetRequests.set(cacheKey, promise);
+    return promise;
   }
+
+  return executeRequest();
 }
 
 export const apiClient = {
