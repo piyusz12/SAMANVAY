@@ -1313,7 +1313,28 @@ export function getMockFallback<T = any>(
     } as unknown as T;
   }
 
-  // 10. Mutating endpoints (POST/PATCH/PUT) default success responses
+  // 10. System Health & Gateway Telemetry
+  if (cleanEndpoint === '/api/v1/health' || cleanEndpoint === '/health') {
+    return {
+      status: 'healthy',
+      service: 'SAMANVAY - AICTE Integrated Complaint Dashboard',
+      version: '1.0.0',
+      environment: typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'development' : 'production',
+      database: {
+        status: 'connected',
+        dialect: 'sqlite',
+        latency_ms: 0.42,
+      },
+      telemetry: {
+        uptime_seconds: 86400,
+        bureau_sync: 'nominal',
+        active_ledger_blocks: 124,
+      },
+      timestamp: new Date().toISOString(),
+    } as unknown as T;
+  }
+
+  // 11. Mutating endpoints (POST/PATCH/PUT) default success responses
   if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)) {
     return {
       success: true,

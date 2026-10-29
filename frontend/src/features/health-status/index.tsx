@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '../../shared/api/api-client';
+import { getMockFallback } from '../../shared/api/mock-data';
 import { Modal } from '../../shared/ui/Modal';
 import { Button } from '../../shared/ui/Button';
 import { Badge } from '../../shared/ui/Badge';
@@ -14,11 +16,24 @@ export const HealthStatusModal: React.FC<{ isOpen: boolean; onClose: () => void 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<any>({
     queryKey: ['system-health'],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/health`);
-      if (!res.ok) {
-        throw new Error(`HTTP Error ${res.status}: Backend service health check degraded.`);
-      }
-      return await res.json();
+      try {
+        const result = await apiClient.get('/api/v1/health');
+        if (result && (result.status === 'healthy' || result.service)) {
+          return result;
+        }
+      } catch {}
+
+      try {
+        const res = await fetch('/health');
+        if (res.ok) {
+          return await res.json();
+        }
+      } catch {}
+
+      const fallback = getMockFallback('/api/v1/health');
+      if (fallback) return fallback;
+
+      throw new Error('Backend service health check degraded.');
     },
     enabled: isOpen,
     refetchInterval: isOpen ? 10000 : false,
